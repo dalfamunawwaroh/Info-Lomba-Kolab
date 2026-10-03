@@ -2,10 +2,10 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   LayoutDashboard, Users, Building2, Trophy, UsersRound,
-  FileText, ClipboardList, History, UserCircle, ChevronLeft,
-  ChevronRight, LogOut, X, Send
+  FileText, ClipboardList, History, ChevronLeft, ChevronRight, LogOut, X, Send
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
+import { getInitials } from '@/utils/helpers';
 
 const adminMenu = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
@@ -39,118 +39,73 @@ const mahasiswaMenu = [
 function Sidebar() {
   const { user, logout, isAdmin, isDosen } = useAuth();
   const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore();
-  const location = useLocation();
-
+  
   const menuItems = isAdmin ? adminMenu : isDosen ? dosenMenu : mahasiswaMenu;
-  const basePath = isAdmin ? '/admin' : isDosen ? '/dosen' : '/mahasiswa';
-
-  // Close mobile sidebar on navigation
-  const handleNavClick = () => {
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-  };
 
   return (
     <>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 sidebar-overlay lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      <aside
-        className={`fixed left-0 top-0 z-40 h-screen bg-sidebar text-sidebar-foreground border-r transition-all duration-300 ease-in-out flex flex-col
-          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full lg:w-16 lg:translate-x-0'}
-        `}
-      >
-        {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-sidebar-accent shrink-0">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0">
-              <Trophy className="w-4 h-4 text-white" />
+      <aside className={`fixed left-0 top-0 z-50 h-screen bg-[#0F1115] border-r border-white/5 text-slate-300 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col ${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full lg:w-[88px] lg:translate-x-0'}`}>
+        
+        {/* Logo Area */}
+        <div className="h-24 flex items-center px-6 shrink-0 border-b border-white/5">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#6C1B75] to-[#9333EA] flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(147,51,234,0.3)]">
+              <Trophy className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-white truncate">Info Lomba</h1>
+            <span className={`text-[20px] font-extrabold text-white tracking-wide transition-opacity duration-300 ${!sidebarOpen && 'lg:opacity-0'}`}>
+              Ko+Lab
+            </span>
           </div>
-          {/* Mobile close */}
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1.5 rounded-md hover:bg-sidebar-accent text-gray-400 hover:text-white lg:hidden"
-          >
-            <X size={18} />
+          <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-white/10 text-slate-400 lg:hidden">
+            <X size={20} />
           </button>
-          {/* Desktop collapse */}
-          <button
-            onClick={toggleSidebar}
-            className="hidden lg:flex p-1.5 rounded-md hover:bg-sidebar-accent text-gray-400 hover:text-white"
-          >
-            {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-          </button>
-        </div>
-
-        {/* User info */}
-        <div className="px-4 py-3 border-b border-sidebar-accent shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-              {user?.name?.charAt(0)?.toUpperCase() || '?'}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-              <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
-            </div>
-          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2">
-          <ul className="space-y-0.5">
-            {menuItems.map((item, index) => (
-              <li key={item.to} style={{ animationDelay: `${index * 30}ms` }}>
+        <nav className="flex-1 overflow-y-auto py-8 px-4 custom-scrollbar">
+          <ul className="space-y-1.5">
+            {menuItems.map((item) => (
+              <li key={item.to}>
                 <NavLink
                   to={item.to}
                   end={item.end}
-                  onClick={handleNavClick}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group ${
-                      isActive
-                        ? 'bg-sidebar-accent text-white font-medium shadow-sm'
-                        : 'text-gray-400 hover:text-white hover:bg-sidebar-accent/50'
-                    }`
-                  }
+                  onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                  className={({ isActive }) => `flex items-center gap-4 px-4 py-3.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 group ${isActive ? 'bg-[#9333EA]/10 text-white' : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'}`}
                 >
-                  <item.icon size={18} className="shrink-0 transition-transform group-hover:scale-110" />
-                  <span className="truncate">{item.label}</span>
+                  {({ isActive }) => (
+                    <>
+                      <item.icon size={20} className={`shrink-0 transition-transform duration-300 ${isActive ? 'text-[#9333EA]' : 'group-hover:scale-110 group-hover:text-slate-300'}`} />
+                      <span className={`truncate transition-opacity duration-300 ${!sidebarOpen && 'lg:hidden'}`}>{item.label}</span>
+                      {isActive && sidebarOpen && <div className="absolute left-0 w-[3px] h-8 bg-[#9333EA] rounded-r-full" />}
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
 
-        {/* Bottom actions */}
-        <div className="border-t border-sidebar-accent p-2 shrink-0">
-          <NavLink
-            to={`${basePath}/profile`}
-            onClick={handleNavClick}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                isActive
-                  ? 'bg-sidebar-accent text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-sidebar-accent/50'
-              }`
-            }
-          >
-            <UserCircle size={18} className="shrink-0" />
-            <span>Profil</span>
-          </NavLink>
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 w-full transition-all duration-200"
-          >
-            <LogOut size={18} className="shrink-0" />
-            <span>Logout</span>
+        {/* Footer / User Profile */}
+        <div className="p-4 border-t border-white/5 shrink-0 flex flex-col gap-2">
+          <button onClick={toggleSidebar} className={`hidden lg:flex items-center gap-4 px-4 py-3 rounded-xl text-[14.5px] font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-200 ${!sidebarOpen && 'justify-center'}`}>
+            {sidebarOpen ? <ChevronLeft size={20} className="shrink-0" /> : <ChevronRight size={20} className="shrink-0" />}
+            <span className={`truncate ${!sidebarOpen && 'hidden'}`}>Kecilkan</span>
           </button>
+          
+          <div className={`flex items-center gap-4 px-4 py-3 rounded-xl bg-white/5 border border-white/5 mt-2 ${!sidebarOpen && 'lg:justify-center lg:px-0'}`}>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shrink-0 border border-white/10 text-white text-xs font-bold">
+              {getInitials(user?.name)}
+            </div>
+            <div className={`flex-1 min-w-0 transition-opacity duration-300 ${!sidebarOpen && 'lg:hidden'}`}>
+              <p className="text-[14px] font-bold text-white truncate">{user?.name}</p>
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider mt-0.5 font-semibold">{user?.role}</p>
+            </div>
+            <button onClick={logout} className={`p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors ${!sidebarOpen && 'lg:hidden'}`}>
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
       </aside>
     </>

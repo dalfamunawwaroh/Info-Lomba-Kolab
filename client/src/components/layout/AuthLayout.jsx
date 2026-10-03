@@ -1,137 +1,61 @@
-import { Outlet, Link } from 'react-router-dom';
-import { ToastContainer } from '@/components/common/Toast';
-import { Trophy, Users, GraduationCap, Star, Sparkles, ArrowLeft, Shield } from 'lucide-react';
+import { Link, Outlet } from 'react-router-dom';
+import { Trophy, ArrowLeft } from 'lucide-react';
 
-function AuthLayout() {
+export function AuthLayout() {
   return (
-    <div className="min-h-screen flex" style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-[45%] relative auth-bg overflow-hidden">
-        {/* Animated blobs */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-blob" />
-        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl animate-blob" style={{ animationDelay: '3s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-white/5 rounded-full blur-2xl animate-blob" style={{ animationDelay: '5s' }} />
-
-        {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-          backgroundSize: '30px 30px'
-        }} />
-
-        {/* Floating icons */}
-        {[
-          { Icon: Trophy, top: '15%', left: '15%', delay: '0s', size: 24 },
-          { Icon: Star, top: '30%', right: '20%', delay: '1s', size: 20 },
-          { Icon: GraduationCap, bottom: '25%', left: '20%', delay: '2s', size: 22 },
-          { Icon: Users, bottom: '15%', right: '15%', delay: '0.5s', size: 18 },
-          { Icon: Shield, top: '55%', left: '10%', delay: '1.5s', size: 20 },
-          { Icon: Sparkles, top: '20%', left: '55%', delay: '2.5s', size: 16 },
-        ].map((p, i) => (
-          <div
-            key={i}
-            className="absolute animate-parallax"
-            style={{ top: p.top, left: p.left, right: p.right, bottom: p.bottom, animationDelay: p.delay }}
-          >
-            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
-              <p.Icon className="text-white/40" size={p.size} />
-            </div>
-          </div>
-        ))}
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between w-full p-12">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group w-fit">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white tracking-tight">
-              Info Lomba <span className="text-white/70">Ko+Lab</span>
-            </span>
-          </Link>
-
-          {/* Center text */}
-          <div className="animate-fade-in">
-            <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-              Wujudkan Prestasi<br />
-              <span className="text-amber-200">Bersama Ko+Lab</span>
-            </h2>
-            <p className="text-white/60 text-lg leading-relaxed max-w-md">
-              Ekosistem terpadu untuk mahasiswa, dosen, dan admin — temukan lomba, bentuk tim,
-              dan raih prestasi dalam satu platform.
-            </p>
-
-            {/* Mini stats */}
-            <div className="mt-10 grid grid-cols-3 gap-6">
-              {[
-                { val: '50+', label: 'Lomba' },
-                { val: '200+', label: 'Mahasiswa' },
-                { val: '80+', label: 'Tim' },
-              ].map((s, i) => (
-                <div key={i} className="text-center">
-                  <p className="text-2xl font-bold text-white">{s.val}</p>
-                  <p className="text-xs text-white/50 mt-0.5">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom quote */}
-          <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <blockquote className="text-white/40 text-sm italic">
-              "Platform yang mengubah cara civitas akademika berkompetisi."
-            </blockquote>
-          </div>
-        </div>
+    <div className="min-h-screen w-full flex items-center justify-center font-sans relative overflow-hidden bg-[#0F172A]">
+      {/* Dynamic Animated Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* Animated glowing orbs */}
+        <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-purple-600/40 rounded-full mix-blend-screen blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-[10%] right-[10%] w-[600px] h-[600px] bg-blue-600/40 rounded-full mix-blend-screen blur-[130px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[40%] right-[30%] w-[400px] h-[400px] bg-amber-500/30 rounded-full mix-blend-screen blur-[100px] animate-pulse-slow" style={{ animationDelay: '4s' }} />
+        <div className="absolute bottom-[20%] left-[30%] w-[450px] h-[450px] bg-rose-500/30 rounded-full mix-blend-screen blur-[110px] animate-pulse-slow" style={{ animationDelay: '1s' }} />
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNykiLz48L3N2Zz4=')] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)]" />
       </div>
 
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gray-50 relative min-h-screen">
-        {/* Subtle background decoration */}
-        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#6C1B75]/5 rounded-full blur-[80px]" />
-        <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#9333EA]/5 rounded-full blur-[60px]" />
-
-        <div className="relative z-10 w-full max-w-md">
-          {/* Back to home (mobile) */}
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#6C1B75] transition-colors mb-6 lg:hidden"
-          >
-            <ArrowLeft size={14} /> Kembali ke beranda
+      {/* Main Glass Card */}
+      <div className="relative z-10 w-full max-w-xl p-4 sm:p-6 lg:p-8 animate-slide-up">
+        {/* Top Action */}
+        <div className="mb-6 flex justify-between items-center px-2">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors group bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-white/10">
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+            Kembali ke Beranda
           </Link>
-
-          {/* Mobile logo */}
-          <div className="text-center mb-8 lg:hidden animate-fade-in-down">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6C1B75] to-[#9333EA] mb-3 shadow-lg shadow-[#6C1B75]/20">
-              <Trophy className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Info Lomba</h1>
-            <p className="text-[#6C1B75] font-medium text-sm">Ko+Lab</p>
-          </div>
-
-          {/* Desktop: back link above card */}
-          <Link
-            to="/"
-            className="hidden lg:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#6C1B75] transition-colors mb-6"
-          >
-            <ArrowLeft size={14} /> Kembali ke beranda
-          </Link>
-
-          {/* Card */}
-          <div className="bg-white rounded-2xl shadow-xl shadow-black/5 border border-gray-100 animate-scale-in overflow-hidden">
-            <Outlet />
-          </div>
-
-          {/* Footer */}
-          <p className="text-center text-muted-foreground/50 text-xs mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            &copy; 2026 Ko+Lab. Semua hak dilindungi.
-          </p>
         </div>
 
-        <ToastContainer />
+        {/* The Card */}
+        <div className="w-full bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-white/60 overflow-hidden relative">
+          
+          {/* Card Header Pattern */}
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 pointer-events-none" />
+          
+          <div className="px-6 py-10 sm:px-12 sm:py-12 relative z-10">
+            <div className="flex justify-center mb-8">
+              <Link to="/" className="flex items-center gap-3 group transition-all">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6C1B75] to-[#9333EA] flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-purple-500/50 group-hover:scale-110 transition-all duration-300 ring-4 ring-purple-500/20">
+                  <Trophy className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-3xl font-black tracking-tight text-slate-900 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
+                  Ko+Lab
+                </span>
+              </Link>
+            </div>
+
+            {/* Form Content */}
+            <Outlet />
+          </div>
+        </div>
+        
+        {/* Footer info */}
+        <div className="text-center mt-8">
+          <p className="text-sm text-slate-400 font-medium">
+            © {new Date().getFullYear()} Ko+Lab. Platform #1 Mahasiswa Berkarya.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-
-export { AuthLayout };

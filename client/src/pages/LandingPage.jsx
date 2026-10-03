@@ -286,7 +286,7 @@ function Navbar() {
       </div>
       <nav className={`fixed z-50 transition-all duration-500 ${
         scrolled
-          ? 'top-3 left-4 right-4 max-w-5xl mx-auto glass shadow-[0_8px_40px_rgba(108,27,117,0.12)] rounded-[1.5rem] border border-white/40'
+          ? 'top-3 left-4 right-4 max-w-5xl mx-auto glass shadow-[0_8px_40px_rgba(108,27,117,0.12)] rounded-full border border-white/40'
           : 'top-0 left-0 right-0 w-full bg-transparent'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -644,20 +644,65 @@ function FeatureSpotlightSection() {
               <Reveal direction={spot.direction === 'left' ? 'right' : 'left'} delay={0.15} className={spot.direction === 'right' ? 'lg:order-1' : ''}>
                 {/* Decorative card mockup */}
                 <div className="relative rounded-3xl p-1 shadow-2xl" style={{ background: GRADIENTS[spot.grad] }}>
-                  <div className="bg-white rounded-[1.15rem] p-8">
-                    <div className="space-y-4">
-                      {[1, 2, 3].map((row) => (
-                        <div key={row} className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl opacity-20" style={{ background: GRADIENTS[spot.grad] }} />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-3 bg-gray-100 rounded-full" style={{ width: `${80 - row * 15}%` }} />
-                            <div className="h-2 bg-gray-50 rounded-full" style={{ width: `${60 - row * 10}%` }} />
-                          </div>
-                          <div className="w-8 h-8 rounded-lg opacity-10" style={{ background: GRADIENTS[spot.grad] }} />
+                  <div className="bg-white rounded-[1.15rem] p-8 min-h-[250px] flex flex-col justify-center">
+                    {i === 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 p-3 rounded-xl">
+                          <Search className="w-5 h-5 text-gray-400" />
+                          <div className="flex-1 h-2 bg-gray-200 rounded-full w-1/2"></div>
+                          <div className="w-16 h-6 bg-brand-100 rounded-md"></div>
                         </div>
-                      ))}
-                      <div className="h-24 rounded-2xl opacity-5" style={{ background: GRADIENTS[spot.grad] }} />
-                    </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[1, 2].map((item) => (
+                            <div key={item} className="p-3 border border-gray-100 rounded-xl bg-white shadow-sm hover:border-brand-200 transition-colors">
+                              <div className="w-8 h-8 rounded-lg mb-2 opacity-20" style={{ background: GRADIENTS[spot.grad] }}></div>
+                              <div className="h-2 bg-gray-200 rounded-full w-3/4 mb-2"></div>
+                              <div className="h-2 bg-gray-100 rounded-full w-1/2"></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {i === 1 && (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="h-3 bg-gray-200 rounded-full w-1/3"></div>
+                          <div className="w-16 h-6 bg-emerald-100 rounded-full text-[10px] flex items-center justify-center text-emerald-700 font-bold">+ Invite</div>
+                        </div>
+                        {[1, 2, 3].map((item) => (
+                          <div key={item} className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-default">
+                            <div className="w-10 h-10 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white font-bold text-xs" style={{ background: GRADIENTS[spot.grad] }}>
+                              U{item}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <div className="h-2.5 bg-gray-200 rounded-full w-1/2"></div>
+                              <div className="h-2 bg-gray-100 rounded-full w-1/3"></div>
+                            </div>
+                            <div className="w-16 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[9px] font-medium text-gray-500">
+                              Member
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {i === 2 && (
+                      <div className="relative pl-6 space-y-6">
+                        <div className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-gray-100"></div>
+                        {[
+                          { status: 'Pengajuan Tim', color: 'bg-brand-500', active: true },
+                          { status: 'Persetujuan Dosen', color: 'bg-amber-500', active: true },
+                          { status: 'Validasi Admin', color: 'bg-gray-200', active: false }
+                        ].map((step, idx) => (
+                          <div key={idx} className="relative flex items-center gap-4">
+                            <div className={`absolute -left-[27px] w-4 h-4 rounded-full border-4 border-white shadow-sm ${step.color} ${step.active ? 'animate-pulse' : ''}`}></div>
+                            <div className="flex-1 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                              <div className="h-2.5 bg-gray-700 rounded-full w-1/2 mb-2"></div>
+                              <div className="h-2 bg-gray-300 rounded-full w-3/4"></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </Reveal>
@@ -932,31 +977,56 @@ function FAQSection() {
   const [open, setOpen] = useState(null);
 
   return (
-    <section id="faq" className="py-28 bg-white relative overflow-hidden">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <Reveal className="text-center mb-14">
+    <section id="faq" className="py-28 bg-[#F8FAFC] relative overflow-hidden">
+      {/* Decorative Blur Backgrounds */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/5 blur-[120px] rounded-full mix-blend-multiply" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] rounded-full mix-blend-multiply" />
+
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 z-10">
+        <Reveal className="text-center mb-16">
           <SectionLabel icon={Lightbulb} text="FAQ" variant="accent" />
-          <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
             Pertanyaan <span className="text-gradient">Umum</span>
           </h2>
-          <p className="mt-4 text-gray-400 text-lg max-w-md mx-auto">
-            Jawaban untuk pertanyaan yang sering diajukan.
+          <p className="mt-4 text-slate-500 text-lg max-w-md mx-auto">
+            Semua jawaban yang Anda butuhkan untuk memulai perjalanan prestasi.
           </p>
         </Reveal>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {SITE_DATA.faqs.map((f, i) => (
-            <Reveal key={i} delay={i * 0.04}>
-              <div className={`rounded-2xl overflow-hidden transition-all duration-300 ${
-                open === i ? 'bg-brand-50/50 border border-brand-200 shadow-sm' : 'bg-gray-50/80 border border-gray-100 hover:border-gray-200'
-              }`}>
-                <button onClick={() => setOpen(open === i ? null : i)}
-                  className="w-full flex items-center justify-between px-6 py-5 text-left group">
-                  <span className="font-bold text-gray-900 pr-4 text-sm group-hover:text-brand-600 transition-colors">{f.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-gray-300 shrink-0 transition-all duration-300 ${open === i ? 'rotate-180 text-brand-600' : 'group-hover:text-brand-400'}`} />
+            <Reveal key={i} delay={i * 0.05}>
+              <div 
+                className={`rounded-3xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  open === i 
+                    ? 'bg-white shadow-[0_20px_40px_rgba(0,0,0,0.06)] border border-brand-100 scale-[1.02]' 
+                    : 'bg-white/60 hover:bg-white shadow-sm hover:shadow-md border border-slate-200/60 hover:border-brand-200/50'
+                }`}
+              >
+                <button 
+                  onClick={() => setOpen(open === i ? null : i)}
+                  className="w-full flex items-center justify-between px-6 py-6 text-left group"
+                >
+                  <span className={`font-bold pr-4 text-[15px] transition-colors duration-300 ${
+                    open === i ? 'text-brand-600' : 'text-slate-700 group-hover:text-brand-600'
+                  }`}>
+                    {f.q}
+                  </span>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-500 ${
+                    open === i ? 'bg-brand-50 text-brand-600 rotate-180' : 'bg-slate-50 text-slate-400 group-hover:bg-brand-50/50 group-hover:text-brand-400'
+                  }`}>
+                    <ChevronDown className="w-5 h-5" />
+                  </div>
                 </button>
-                <div className={`overflow-hidden transition-all duration-400 ${open === i ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <p className="px-6 pb-5 text-sm text-gray-500 leading-relaxed">{f.a}</p>
+                <div 
+                  className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                    open === i ? 'max-h-64 opacity-100 mb-6' : 'max-h-0 opacity-0 mb-0'
+                  }`}
+                >
+                  <div className="px-6 pb-2">
+                    <div className="h-[1px] w-full bg-slate-100 mb-4" />
+                    <p className="text-[15px] text-slate-500 leading-relaxed pr-8">{f.a}</p>
+                  </div>
                 </div>
               </div>
             </Reveal>
@@ -1023,20 +1093,45 @@ function CTASection() {
 
 function Footer() {
   return (
-    <footer className="relative bg-gray-950 text-gray-400 pt-0 pb-16 overflow-hidden">
-      {/* Layered wave SVG at top */}
-      <div className="relative -mt-1">
-        <svg viewBox="0 0 1440 150" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full block" preserveAspectRatio="none" style={{ height: '150px' }}>
-          {/* Back wave — subtle, slow undulation */}
-          <path d="M0,20 C120,60 240,10 360,40 C480,70 600,5 720,35 C840,65 960,15 1080,45 C1200,75 1320,25 1440,55 L1440,150 L0,150 Z" fill="#030712" opacity="0.2" />
-          {/* Mid-back wave */}
-          <path d="M0,40 C200,90 400,10 600,55 C800,100 1000,20 1200,60 C1350,85 1400,50 1440,70 L1440,150 L0,150 Z" fill="#030712" opacity="0.4" />
-          {/* Mid-front wave */}
-          <path d="M0,55 C160,100 320,20 480,65 C640,110 800,30 960,75 C1120,120 1280,40 1440,80 L1440,150 L0,150 Z" fill="#030712" opacity="0.65" />
-          {/* Front wave — sharp, fully opaque */}
-          <path d="M0,75 C180,115 360,50 540,85 C720,120 900,55 1080,90 C1260,125 1380,70 1440,100 L1440,150 L0,150 Z" fill="#030712" />
+    <footer className="relative bg-[#030712] text-gray-400 pt-16 pb-16 mt-32">
+      {/* Animated Wave SVG at top */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0] -translate-y-[99%]">
+        <svg
+          className="relative block w-[200%] md:w-[150%] lg:w-full h-[60px] md:h-[100px] lg:h-[150px]"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 24 150 28"
+          preserveAspectRatio="none"
+          shapeRendering="auto"
+        >
+          <defs>
+            <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+          </defs>
+          <g className="animate-wave-slow">
+            <use href="#gentle-wave" x="48" y="0" fill="rgba(3, 7, 18, 0.3)" />
+          </g>
+          <g className="animate-wave-mid">
+            <use href="#gentle-wave" x="48" y="3" fill="rgba(3, 7, 18, 0.5)" />
+          </g>
+          <g className="animate-wave-fast">
+            <use href="#gentle-wave" x="48" y="5" fill="rgba(3, 7, 18, 0.7)" />
+          </g>
+          <g className="animate-wave-fastest">
+            <use href="#gentle-wave" x="48" y="7" fill="#030712" />
+          </g>
         </svg>
       </div>
+
+      <style>{`
+        @keyframes wave-move {
+          0% { transform: translate3d(-90px, 0, 0); }
+          100% { transform: translate3d(85px, 0, 0); }
+        }
+        .animate-wave-slow { animation: wave-move 20s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite; }
+        .animate-wave-mid { animation: wave-move 15s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite; }
+        .animate-wave-fast { animation: wave-move 10s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite; }
+        .animate-wave-fastest { animation: wave-move 5s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite; }
+      `}</style>
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid md:grid-cols-4 gap-10 mb-12">

@@ -36,8 +36,8 @@ function ForgotPasswordForm() {
           Periksa folder inbox dan spam kamu. Link berlaku selama 1 jam.
         </p>
         <Link to="/login">
-          <Button variant="outline" className="w-full h-12 rounded-xl border-gray-200 hover:border-[#6C1B75] hover:text-[#6C1B75] transition-colors">
-            <ArrowLeft size={16} className="mr-2" />
+          <Button variant="outline" className="w-full h-14 rounded-2xl border-slate-200 font-bold hover:border-[#6C1B75] hover:text-[#6C1B75] hover:bg-slate-50 transition-all text-slate-700">
+            <ArrowLeft size={18} className="mr-2" />
             Kembali ke Login
           </Button>
         </Link>
@@ -57,39 +57,39 @@ function ForgotPasswordForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-foreground">Email</label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-slate-700 ml-1">Email</label>
           <div className="relative group">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-[#6C1B75] transition-colors" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
             <input
               type="email"
               placeholder="nama@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`w-full h-12 pl-11 pr-4 rounded-xl border text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#6C1B75]/20 focus:border-[#6C1B75] ${
-                error ? 'border-red-300 bg-red-50/50' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'
+              className={`w-full h-14 pl-12 pr-4 rounded-2xl border text-[15px] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${
+                error ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'
               }`}
               autoFocus
             />
           </div>
-          {error && <p className="text-xs text-red-500 animate-fade-in">{error}</p>}
+          {error && <p className="text-sm text-red-500 animate-fade-in ml-1 font-medium">{error}</p>}
         </div>
 
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-12 rounded-xl font-semibold text-sm bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-lg hover:shadow-[#6C1B75]/25 active:scale-[0.98]"
+          className="w-full h-14 mt-4 rounded-2xl font-bold text-[15px] bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25 active:scale-[0.98]"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Mengirim...
             </span>
           ) : (
             <span className="flex items-center gap-2">
               Kirim Link Reset
-              <ArrowRight size={16} />
+              <ArrowRight size={18} />
             </span>
           )}
         </Button>

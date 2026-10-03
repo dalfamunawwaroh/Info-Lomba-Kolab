@@ -4,17 +4,17 @@ import { Header } from './Header';
 import { ToastContainer } from '@/components/common/Toast';
 import useUIStore from '@/store/uiStore';
 
-function MainLayout() {
+export function MainLayout() {
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex font-inter selection:bg-[#9333EA]/20">
       <Sidebar />
-      <div className={`transition-all duration-300 ease-in-out ${
-        sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+      <div className={`relative flex-1 flex flex-col min-h-screen transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        sidebarOpen ? 'lg:pl-[280px]' : 'lg:pl-[88px]'
       }`}>
         <Header />
-        <main className="p-4 lg:p-6 page-enter">
+        <main className="flex-1 p-6 lg:p-10 pt-2 lg:pt-4 max-w-[1600px] w-full mx-auto relative z-10 animate-fade-in-up">
           <Outlet />
         </main>
       </div>
@@ -22,5 +22,3 @@ function MainLayout() {
     </div>
   );
 }
-
-export { MainLayout };
