@@ -38,19 +38,19 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="p-8 sm:p-10 text-center animate-fade-in">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-5 animate-bounce-in">
-          <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+      <div className="text-center animate-fade-in py-4">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-4 animate-bounce-in">
+          <CheckCircle2 className="w-7 h-7 text-emerald-600" />
         </div>
-        <h2 className="text-xl font-bold text-foreground mb-2 tracking-tight">Password Berhasil Diubah!</h2>
-        <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
+        <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">Password Berhasil Diubah!</h2>
+        <p className="text-xs sm:text-sm text-slate-600 mb-6 leading-relaxed">
           Password kamu sudah diperbarui. Silakan login dengan password baru.
         </p>
         <Link to="/login">
-          <Button className="w-full h-14 rounded-2xl font-bold text-[15px] bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25">
-            <span className="flex items-center gap-2">
+          <Button className="w-full h-12 sm:h-13 rounded-xl sm:rounded-2xl font-bold text-sm bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25">
+            <span className="flex items-center gap-2 justify-center">
               Login Sekarang
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
             </span>
           </Button>
         </Link>
@@ -59,73 +59,75 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="p-8 sm:p-10">
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 bg-[#6C1B75]/10 text-[#6C1B75] text-xs font-semibold px-3 py-1 rounded-full mb-4">
-          <ShieldCheck size={12} /> Reset Password
+    <div className="w-full">
+      <div className="mb-5 text-center">
+        <div className="inline-flex items-center gap-1.5 bg-[#6C1B75]/10 text-[#6C1B75] text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-full mb-3">
+          <ShieldCheck size={13} /> Reset Password
         </div>
-        <h2 className="text-2xl font-bold text-foreground tracking-tight">Password Baru</h2>
-        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Password Baru</h2>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
           Masukkan password baru untuk akun kamu.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 ml-1">Password Baru</label>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        <div className="space-y-1.5">
+          <label className="text-xs sm:text-sm font-bold text-slate-700 ml-1">Password Baru</label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
             <input
               type={showPassword ? 'text' : 'password'}
               placeholder="Password baru"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className={`w-full h-14 pl-12 pr-12 rounded-2xl border text-[15px] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${errors.password ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'}`}
+              className={`w-full h-12 sm:h-13 pl-11 pr-11 rounded-xl sm:rounded-2xl border text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${errors.password ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'}`}
               autoFocus
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#6C1B75] transition-colors p-1 rounded-md hover:bg-slate-100">
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#6C1B75] transition-colors p-1 rounded-md hover:bg-slate-100">
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-sm text-red-500 animate-fade-in ml-1 font-medium">{errors.password}</p>}
+          {errors.password && <p className="text-xs text-red-500 animate-fade-in ml-1 font-medium">{errors.password}</p>}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700 ml-1">Konfirmasi Password Baru</label>
+        <div className="space-y-1.5">
+          <label className="text-xs sm:text-sm font-bold text-slate-700 ml-1">Konfirmasi Password Baru</label>
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
             <input
               type="password" placeholder="Ulangi password baru"
               value={form.password_confirm}
               onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
-              className={`w-full h-14 pl-12 pr-4 rounded-2xl border text-[15px] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${errors.password_confirm ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'}`}
+              className={`w-full h-12 sm:h-13 pl-11 pr-4 rounded-xl sm:rounded-2xl border text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${errors.password_confirm ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'}`}
             />
           </div>
-          {errors.password_confirm && <p className="text-sm text-red-500 animate-fade-in ml-1 font-medium">{errors.password_confirm}</p>}
+          {errors.password_confirm && <p className="text-xs text-red-500 animate-fade-in ml-1 font-medium">{errors.password_confirm}</p>}
         </div>
 
-        <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-4 space-y-2.5">
-          <p className="text-[13px] font-bold text-slate-700 mb-2">Kekuatan Password</p>
-          <PasswordCheck label="Minimal 8 karakter" ok={passwordChecks.length} />
-          <PasswordCheck label="1 huruf besar" ok={passwordChecks.upper} />
-          <PasswordCheck label="1 angka" ok={passwordChecks.number} />
-          <PasswordCheck label="Password cocok" ok={passwordChecks.match} />
+        <div className="bg-slate-50 border border-slate-200/50 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 space-y-2">
+          <p className="text-xs font-bold text-slate-700 mb-1.5">Kekuatan Password</p>
+          <div className="grid grid-cols-2 gap-2">
+            <PasswordCheck label="Min 8 karakter" ok={passwordChecks.length} />
+            <PasswordCheck label="1 huruf besar" ok={passwordChecks.upper} />
+            <PasswordCheck label="1 angka" ok={passwordChecks.number} />
+            <PasswordCheck label="Password cocok" ok={passwordChecks.match} />
+          </div>
         </div>
 
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-14 mt-4 rounded-2xl font-bold text-[15px] bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25 active:scale-[0.98]"
+          className="w-full h-12 sm:h-13 mt-2 rounded-xl sm:rounded-2xl font-bold text-sm bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25 active:scale-[0.98]"
         >
           {loading ? (
-            <span className="flex items-center gap-2">
-              <span className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span className="flex items-center gap-2 justify-center">
+              <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Menyimpan...
             </span>
           ) : (
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 justify-center">
               Simpan Password Baru
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
             </span>
           )}
         </Button>
