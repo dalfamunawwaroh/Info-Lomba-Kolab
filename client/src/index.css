@@ -4,29 +4,54 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 270 50% 15%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 270 50% 15%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 270 50% 15%;
-    --primary: 295 60% 28%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 271 81% 56%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 295 30% 95%;
-    --secondary-foreground: 270 47% 11%;
-    --muted: 295 15% 95%;
-    --muted-foreground: 270 10% 50%;
-    --accent: 45 93% 55%;
-    --accent-foreground: 270 50% 15%;
-    --destructive: 0 84% 60%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 271 81% 56%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 346 84% 61%;
     --destructive-foreground: 0 0% 100%;
-    --border: 295 20% 90%;
-    --input: 295 20% 90%;
-    --ring: 295 60% 28%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 271 81% 56%;
     --radius: 0.75rem;
-    --sidebar: 270 50% 8%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-accent: 271 81% 56%;
+  }
+
+  .dark {
+    --background: 224 47% 5%;
+    --foreground: 210 40% 98%;
+    --card: 222 35% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 35% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 271 81% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 30% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 25% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 271 81% 56%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 346 84% 61%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 222 25% 18%;
+    --input: 222 25% 18%;
+    --ring: 271 81% 56%;
+    --sidebar: 224 47% 5%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-accent: 295 40% 20%;
+    --sidebar-accent: 271 81% 56%;
   }
 }
 

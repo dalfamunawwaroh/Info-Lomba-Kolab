@@ -13,18 +13,18 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
     <div className="space-y-8 pb-12 animate-fade-in-up">
       {/* Header Bento */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-[#0F1115] rounded-[32px] p-8 md:p-12 relative overflow-hidden shadow-2xl flex flex-col justify-center">
+        <div className="md:col-span-2 bg-gradient-to-br from-[#1E1B4B] via-[#2E1065] to-[#3B0764] dark:bg-[#0F1115] rounded-[32px] p-8 md:p-12 relative overflow-hidden shadow-2xl flex flex-col justify-center text-white">
           <div className="absolute -top-[50%] -right-[10%] w-[80%] h-[150%] bg-gradient-to-b from-[#9333EA]/30 to-transparent blur-3xl rounded-full transform rotate-12 pointer-events-none" />
           <div className="relative z-10">
             <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4 leading-tight">
-              Selamat datang kembali, <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{firstName}</span>.
+              Selamat datang kembali, <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">{firstName}</span>.
             </h1>
-            <p className="text-slate-400 text-lg md:text-xl font-medium max-w-lg mb-8">
+            <p className="text-purple-200/90 dark:text-slate-400 text-lg md:text-xl font-medium max-w-lg mb-8">
               {activeCount > 0 
                 ? `Kamu sedang aktif di ${activeCount} perlombaan. Tetap fokus dan raih prestasimu!`
                 : 'Belum ada perlombaan yang diikuti. Saatnya mengeksplorasi potensimu!'}
             </p>
-            <Link to="/mahasiswa/competitions" className="inline-flex items-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-full font-bold hover:bg-slate-100 hover:scale-105 transition-all shadow-xl shadow-white/10">
+            <Link to="/mahasiswa/competitions" className="inline-flex items-center gap-3 bg-white text-purple-950 px-8 py-4 rounded-full font-bold hover:bg-purple-100 hover:scale-105 transition-all shadow-xl shadow-purple-900/40">
               Eksplorasi Lomba <ArrowUpRight size={20} />
             </Link>
           </div>
@@ -44,61 +44,61 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Competitions Bento */}
-        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60">
+        <div className="bg-white dark:bg-[#131620]/90 rounded-[32px] p-8 shadow-sm dark:shadow-xl border border-slate-200/80 dark:border-white/10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Trophy size={24} /></div>
-              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Lomba Aktifmu</h2>
+              <div className="p-3 bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl"><Trophy size={24} /></div>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Lomba Aktifmu</h2>
             </div>
           </div>
           <div className="space-y-4">
             {myCompetitions?.length > 0 ? myCompetitions.map(item => (
-              <div key={item.competition?.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-slate-100 hover:border-[#9333EA]/30 hover:bg-[#9333EA]/5 transition-colors gap-4">
+              <div key={item.competition?.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50 hover:border-[#9333EA]/30 hover:bg-purple-50/50 dark:hover:bg-slate-800/80 transition-colors gap-4">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-[#9333EA] transition-colors">{item.competition?.name}</h3>
-                  <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-500">
-                    <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-slate-700">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1 group-hover:text-[#9333EA] dark:group-hover:text-purple-400 transition-colors">{item.competition?.name}</h3>
+                  <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300">
                       <UsersRound size={14} /> {item.team?.name}
                     </span>
-                    {item.advisors?.[0] && <span className="text-slate-400">• Dosen: {item.advisors[0].name}</span>}
+                    {item.advisors?.[0] && <span className="text-slate-500 dark:text-slate-400">• Dosen: {item.advisors[0].name}</span>}
                   </div>
                 </div>
                 <div className="shrink-0"><StatusBadge status={item.competition?.status} labels={STATUS_LABELS} /></div>
               </div>
             )) : (
               <div className="py-12 flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4"><Trophy size={32} /></div>
-                <p className="text-slate-500 font-medium">Belum ada lomba yang kamu ikuti</p>
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4"><Trophy size={32} /></div>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Belum ada lomba yang kamu ikuti</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Upcoming Competitions Bento */}
-        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60">
+        <div className="bg-white dark:bg-[#131620]/90 rounded-[32px] p-8 shadow-sm dark:shadow-xl border border-slate-200/80 dark:border-white/10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Calendar size={24} /></div>
-              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Mendatang</h2>
+              <div className="p-3 bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl"><Calendar size={24} /></div>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Mendatang</h2>
             </div>
-            <Link to="/mahasiswa/competitions" className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"><ChevronRight size={20} /></Link>
+            <Link to="/mahasiswa/competitions" className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300 transition-colors"><ChevronRight size={20} /></Link>
           </div>
           <div className="space-y-4">
             {upcomingCompetitions?.length > 0 ? upcomingCompetitions.slice(0,4).map(comp => (
-              <Link to={`/mahasiswa/competitions/${comp.id}`} key={comp.id} className="group block p-5 rounded-2xl border border-slate-100 hover:border-amber-500/30 hover:bg-amber-50 transition-colors">
+              <Link to={`/mahasiswa/competitions/${comp.id}`} key={comp.id} className="group block p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50 hover:border-amber-500/30 hover:bg-amber-50 dark:hover:bg-slate-800/80 transition-colors">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg mb-1 group-hover:text-amber-700 transition-colors">{comp.name}</h3>
-                    <p className="text-sm font-medium text-slate-500">Deadline: {comp.registration_deadline || '-'}</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{comp.name}</h3>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Deadline: {comp.registration_deadline || '-'}</p>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                  <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
                     <ArrowUpRight size={18} />
                   </div>
                 </div>
               </Link>
             )) : (
               <div className="py-12 flex flex-col items-center text-center">
-                <p className="text-slate-500 font-medium">Belum ada lomba tersedia</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Belum ada lomba tersedia</p>
               </div>
             )}
           </div>
@@ -106,16 +106,16 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
       </div>
 
       {advisorStatuses?.length > 0 && (
-        <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-200/60">
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-8">Status Pengajuan Pembimbing</h2>
+        <div className="bg-white dark:bg-[#131620]/90 rounded-[32px] p-8 shadow-sm dark:shadow-xl border border-slate-200/80 dark:border-white/10">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight mb-8">Status Pengajuan Pembimbing</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {advisorStatuses.map(a => (
-              <div key={a.id} className="flex items-center justify-between p-5 rounded-2xl border border-slate-100 bg-slate-50/50">
+              <div key={a.id} className="flex items-center justify-between p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold">{getInitials(a.advisor?.name)}</div>
+                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold">{getInitials(a.advisor?.name)}</div>
                   <div>
-                    <p className="font-bold text-slate-900">{a.advisor?.name}</p>
-                    <p className="text-sm font-medium text-slate-500">Tim: {a.team?.name}</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{a.advisor?.name}</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tim: {a.team?.name}</p>
                   </div>
                 </div>
                 <StatusBadge status={a.status} labels={ADVISOR_STATUS_LABELS} />

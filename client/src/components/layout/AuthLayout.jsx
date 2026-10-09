@@ -3,7 +3,7 @@ import { Trophy, ArrowLeft, Users, Rocket, Award, Sparkles } from 'lucide-react'
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center font-sans relative overflow-y-auto py-4 sm:py-8 px-4 bg-[#0F172A]">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center font-sans relative overflow-y-auto py-4 sm:py-8 px-4 bg-slate-100 dark:bg-[#0F172A] transition-colors duration-300">
       {/* Dynamic Animated Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Animated glowing orbs */}
