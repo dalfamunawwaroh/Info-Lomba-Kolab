@@ -19,6 +19,7 @@ import ManageTimPage from '@/pages/admin/ManageTimPage';
 import DetailTimAdminPage from '@/pages/admin/DetailTimAdminPage';
 import PengajuanPage from '@/pages/admin/PengajuanPage';
 import BroadcastPage from '@/pages/admin/BroadcastPage';
+import StudentActivityPage from '@/pages/admin/StudentActivityPage';
 
 // Dosen Pages
 import DosenDashboardPage from '@/pages/dosen/DashboardPage';
@@ -119,6 +120,7 @@ function AppRoutes() {
         <Route path="competitions/:id/edit" element={<EditLombaPage />} />
         <Route path="teams" element={<ManageTimPage />} />
         <Route path="teams/:id" element={<DetailTimAdminPage />} />
+        <Route path="activities" element={<StudentActivityPage />} />
         <Route path="submissions" element={<PengajuanPage />} />
         <Route path="broadcast" element={<BroadcastPage />} />
         <Route path="directory" element={<DirektoriPage />} />

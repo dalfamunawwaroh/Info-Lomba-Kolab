@@ -1,7 +1,7 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  LayoutDashboard, Users, Building2, Trophy, UsersRound,
+  LayoutDashboard, Users, Building2, Trophy, UsersRound, Activity,
   FileText, ClipboardList, History, ChevronLeft, ChevronRight, LogOut, X, Send, Megaphone
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
@@ -9,6 +9,7 @@ import { getInitials } from '@/utils/helpers';
 
 const adminMenu = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/admin/activities', icon: Activity, label: 'Kegiatan Mhs & Dosen' },
   { to: '/admin/users', icon: Users, label: 'Kelola User' },
   { to: '/admin/startups', icon: Building2, label: 'Kelola Startup' },
   { to: '/admin/competitions', icon: Trophy, label: 'Kelola Lomba' },
