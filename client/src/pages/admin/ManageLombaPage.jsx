@@ -106,14 +106,14 @@ export default function ManageLombaPage() {
                   <tbody>
                     {competitions.map((c) => (
                       <tr key={c.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-2 font-medium">{c.name}</td>
+                        <td className="py-3 px-2 font-medium">{c.title}</td>
                         <td className="py-3 px-2">
                           <StatusBadge status={c.status} labels={STATUS_LABELS} />
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">{formatDate(c.event_date, 'dd/MM/yy') || '-'}</td>
                         <td className="py-3 px-2 text-muted-foreground">{formatDate(c.registration_deadline, 'dd/MM/yy') || '-'}</td>
                         <td className="py-3 px-2">{c._count?.teams || 0}</td>
-                        <td className="py-3 px-2">{c.max_team_size}</td>
+                        <td className="py-3 px-2">{c.max_team_members}</td>
                         <td className="py-3 px-2">
                           <div className="flex justify-end gap-1">
                             <Button size="icon" variant="ghost" onClick={() => navigate(`/admin/competitions/${c.id}`)}>
@@ -144,7 +144,7 @@ export default function ManageLombaPage() {
           onClose={() => setDeleteTarget(null)}
           onConfirm={handleDelete}
           title="Hapus Lomba?"
-          message={`Hapus lomba "${deleteTarget.name}"? Semua tim dan pendaftaran akan ikut terhapus.`}
+          message={`Hapus lomba "${deleteTarget.title}"? Semua tim dan pendaftaran akan ikut terhapus.`}
           confirmText="Hapus"
         />
       )}

@@ -1,4 +1,5 @@
 import { db } from '../db/index.js';
+import { syncBroadcast, deleteRow, logActivity } from '../db/sync.js';
 
 export const getBroadcasts = (req, res) => {
   try {
@@ -39,6 +40,16 @@ export const createBroadcast = (req, res) => {
     data.broadcasts.unshift(newBroadcast);
     db.write(data);
 
+    syncBroadcast(newBroadcast);
+    logActivity({
+      entity_type: 'broadcast',
+      entity_id: newBroadcast.id,
+      action: 'create',
+      title: `Broadcast "${newBroadcast.title}" ${newBroadcast.status === 'Dijadualkan' ? 'dijadwalkan' : 'dikirim'}`,
+      description: `Target: ${newBroadcast.target} • Kategori: ${newBroadcast.category}`,
+      actor: req.user,
+    });
+
     return res.status(201).json({
       success: true,
       message: scheduleDate ? 'Broadcast berhasil dijadwalkan' : 'Broadcast berhasil dikirimkan',
@@ -59,8 +70,18 @@ export const deleteBroadcast = (req, res) => {
       return res.status(404).json({ success: false, message: 'Broadcast tidak ditemukan' });
     }
 
+    const removed = data.broadcasts[index];
     data.broadcasts.splice(index, 1);
     db.write(data);
+
+    deleteRow('broadcasts', removed.id);
+    logActivity({
+      entity_type: 'broadcast',
+      entity_id: removed.id,
+      action: 'delete',
+      title: `Broadcast "${removed.title}" dihapus`,
+      actor: req.user,
+    });
 
     return res.json({ success: true, message: 'Broadcast berhasil dihapus' });
   } catch (error) {

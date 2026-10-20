@@ -40,6 +40,8 @@ import HistoryPage from '@/pages/mahasiswa/HistoryPage';
 // Shared Pages
 import ProfilePage from '@/pages/shared/ProfilePage';
 import DirektoriPage from '@/pages/shared/DirektoriPage';
+import SettingsPage from '@/pages/shared/SettingsPage';
+import NotificationsPage from '@/pages/shared/NotificationsPage';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import LandingPage from '@/pages/LandingPage';
 
@@ -126,7 +128,8 @@ function AppRoutes() {
         <Route path="directory" element={<DirektoriPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:id" element={<ProfilePage />} />
-        <Route path="settings" element={<ProfilePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
       {/* Dosen Routes */}
@@ -151,7 +154,8 @@ function AppRoutes() {
         <Route path="directory" element={<DirektoriPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:id" element={<ProfilePage />} />
-        <Route path="settings" element={<ProfilePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
       {/* Mahasiswa Routes */}
@@ -171,7 +175,8 @@ function AppRoutes() {
         <Route path="directory" element={<DirektoriPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:id" element={<ProfilePage />} />
-        <Route path="settings" element={<ProfilePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
       {/* Landing Page */}

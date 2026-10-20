@@ -30,6 +30,21 @@ const userService = {
     const res = await api.patch(`/users/${id}/activate`);
     return res.data;
   },
+
+  async resetPassword(id) {
+    const res = await api.patch(`/users/${id}/reset-password`);
+    return res.data;
+  },
+
+  async sendMessage(id, data) {
+    const res = await api.post(`/users/${id}/message`, data);
+    return res.data;
+  },
+
+  async getUserMessages(id) {
+    const res = await api.get(`/users/${id}/messages`);
+    return res.data;
+  },
 };
 
 export default userService;

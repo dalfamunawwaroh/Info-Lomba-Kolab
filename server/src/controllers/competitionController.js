@@ -1,4 +1,5 @@
 import { db } from '../db/index.js';
+import { syncCompetition, deleteRow, logActivity } from '../db/sync.js';
 
 export const getCompetitions = (req, res) => {
   try {
@@ -22,7 +23,17 @@ export const getCompetitions = (req, res) => {
       );
     }
 
-    return res.json({ success: true, data: competitions });
+    // Hitung jumlah tim per lomba (real, dari data.tim yang baru dibuat)
+    const teamCount = {};
+    for (const t of data.teams) {
+      teamCount[t.competition_id] = (teamCount[t.competition_id] || 0) + 1;
+    }
+    const payload = competitions.map((c) => ({
+      ...c,
+      _count: { teams: teamCount[c.id] || 0 },
+    }));
+
+    return res.json({ success: true, data: payload });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -38,7 +49,13 @@ export const getCompetitionById = (req, res) => {
       return res.status(404).json({ success: false, message: 'Kompetisi tidak ditemukan' });
     }
 
-    return res.json({ success: true, data: competition });
+    // Sertakan daftar tim lomba ini agar tampilan "Tim Terdaftar" selalu ter-update
+    const teams = data.teams.filter((t) => t.competition_id === competition.id);
+
+    return res.json({
+      success: true,
+      data: { ...competition, teams, _count: { teams: teams.length } },
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -46,7 +63,13 @@ export const getCompetitionById = (req, res) => {
 
 export const createCompetition = (req, res) => {
   try {
-    const { title, category, organizer, description, prize_pool, registration_deadline, event_date, max_team_members, requirements, image_url } = req.body;
+    const {
+      title, category, organizer, description, prize_pool,
+      registration_deadline, event_date, max_team_members,
+      requirements, image_url, guidebook_url, status,
+      needs_advisor, max_advisors, location,
+      registration_fee, registration_url,
+    } = req.body;
 
     if (!title || !registration_deadline) {
       return res.status(400).json({ success: false, message: 'Judul dan batas pendaftaran wajib diisi' });
@@ -57,20 +80,37 @@ export const createCompetition = (req, res) => {
       id: Date.now(),
       title,
       category: category || 'General Innovation',
-      organizer: organizer || 'Ko+Lab Network',
+      organizer: organizer || '',
       description: description || '',
-      prize_pool: prize_pool || 'TBD',
+      prize_pool: prize_pool || '',
+      registration_fee: registration_fee || 'Gratis',
+      registration_url: registration_url || '',
       registration_deadline,
       event_date: event_date || registration_deadline,
-      status: 'ongoing',
+      status: status || 'upcoming',
       max_team_members: Number(max_team_members) || 3,
+      needs_advisor: needs_advisor === true || needs_advisor === 'true',
+      max_advisors: needs_advisor ? (Number(max_advisors) || 1) : 1,
+      location: location || '',
       requirements: requirements || [],
-      image_url: image_url || 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
+      guidebook_url: guidebook_url || '',
+      image_url: image_url || '',
+      created_by: req.user ? req.user.id : null,
       created_at: new Date().toISOString().split('T')[0],
     };
 
     data.competitions.push(newComp);
     db.write(data);
+
+    syncCompetition(newComp);
+    logActivity({
+      entity_type: 'competition',
+      entity_id: newComp.id,
+      action: 'create',
+      title: `Lomba "${newComp.title}" ditambahkan`,
+      description: `Kategori: ${newComp.category} • Deadline: ${newComp.registration_deadline}`,
+      actor: req.user,
+    });
 
     return res.status(201).json({
       success: true,
@@ -96,6 +136,8 @@ export const updateCompetition = (req, res) => {
     data.competitions[index] = updated;
     db.write(data);
 
+    syncCompetition(updated);
+
     return res.json({ success: true, message: 'Kompetisi berhasil diperbarui', data: updated });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -112,8 +154,18 @@ export const deleteCompetition = (req, res) => {
       return res.status(404).json({ success: false, message: 'Kompetisi tidak ditemukan' });
     }
 
+    const removed = data.competitions[index];
     data.competitions.splice(index, 1);
     db.write(data);
+
+    deleteRow('competitions', Number(id));
+    logActivity({
+      entity_type: 'competition',
+      entity_id: Number(id),
+      action: 'delete',
+      title: `Lomba "${removed.title}" dihapus`,
+      actor: req.user,
+    });
 
     return res.json({ success: true, message: 'Kompetisi berhasil dihapus' });
   } catch (error) {

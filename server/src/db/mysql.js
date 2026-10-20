@@ -40,7 +40,7 @@ export const initMySQL = async () => {
     // 3. Create Tables if not exist
     await pool.query(`
       CREATE TABLE IF NOT EXISTS startups (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
         code VARCHAR(50) NOT NULL,
         description TEXT,
@@ -51,15 +51,23 @@ export const initMySQL = async () => {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
         email VARCHAR(150) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         role ENUM('admin', 'dosen', 'mahasiswa') DEFAULT 'mahasiswa',
         nip_nim VARCHAR(50),
         phone VARCHAR(30),
-        startup_id INT,
+        startup_id BIGINT,
         startup_name VARCHAR(150),
+        position VARCHAR(100),
+        program_studi VARCHAR(100),
+        tempat_lahir VARCHAR(100),
+        tanggal_lahir DATE NULL,
+        instagram VARCHAR(150),
+        linkedin VARCHAR(150),
+        foto_pribadi TEXT,
+        tanda_tangan TEXT,
         expertise JSON,
         skills JSON,
         status ENUM('active', 'inactive') DEFAULT 'active',
@@ -71,7 +79,7 @@ export const initMySQL = async () => {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS competitions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         category VARCHAR(100) NOT NULL,
         organizer VARCHAR(255) NOT NULL,
@@ -83,19 +91,26 @@ export const initMySQL = async () => {
         max_team_members INT DEFAULT 3,
         requirements JSON,
         image_url TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        needs_advisor TINYINT(1) DEFAULT 0,
+        max_advisors INT DEFAULT 1,
+        location VARCHAR(255) DEFAULT "",
+        registration_fee VARCHAR(100) DEFAULT "",
+        registration_url TEXT,
+        guidebook_url TEXT,
+        created_by BIGINT NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS teams (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
-        competition_id INT NOT NULL,
+        competition_id BIGINT NOT NULL,
         competition_title VARCHAR(255),
-        leader_id INT NOT NULL,
+        leader_id BIGINT NOT NULL,
         leader_name VARCHAR(150),
-        advisor_id INT,
+        advisor_id BIGINT,
         advisor_name VARCHAR(150),
         advisor_status ENUM('none', 'pending', 'approved', 'rejected') DEFAULT 'none',
         status ENUM('forming', 'complete', 'withdrawn') DEFAULT 'forming',
@@ -109,13 +124,13 @@ export const initMySQL = async () => {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS submissions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL,
         type_label VARCHAR(100) NOT NULL,
-        team_id INT,
+        team_id BIGINT,
         team_name VARCHAR(150),
         competition_title VARCHAR(255),
-        applicant_id INT NOT NULL,
+        applicant_id BIGINT NOT NULL,
         applicant_name VARCHAR(150),
         applicant_role VARCHAR(50),
         notes TEXT,
@@ -145,6 +160,72 @@ export const initMySQL = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activities (
+        id VARCHAR(50) PRIMARY KEY,
+        entity_type VARCHAR(30) NOT NULL,
+        entity_id BIGINT NULL,
+        action VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        actor_id BIGINT NULL,
+        actor_name VARCHAR(150),
+        actor_role VARCHAR(30),
+        metadata JSON,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_activities_entity (entity_type, entity_id),
+        INDEX idx_activities_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // 3b. Column migrations for databases created before this schema:
+    // - ID columns must be BIGINT (web-created records use Date.now() IDs ~1.79e12).
+    //   MySQL refuses incompatible type changes while FKs exist, so drop → alter → re-add.
+    // - competitions gained extra columns after the original schema was created.
+    try {
+      await migrateIdTypes(pool);
+    } catch (e) {
+      console.warn(`⚠️ [MySQL] ID migration gagal: ${e.message}`);
+    }
+
+    const competitionCols = [
+      'ADD COLUMN needs_advisor TINYINT(1) DEFAULT 0',
+      'ADD COLUMN max_advisors INT DEFAULT 1',
+      'ADD COLUMN location VARCHAR(255) DEFAULT ""',
+      'ADD COLUMN registration_fee VARCHAR(100) DEFAULT ""',
+      'ADD COLUMN registration_url TEXT',
+      'ADD COLUMN guidebook_url TEXT',
+      'ADD COLUMN created_by BIGINT NULL',
+    ];
+    for (const alter of competitionCols) {
+      try {
+        await pool.query(`ALTER TABLE competitions ${alter}`);
+      } catch (e) {
+        if (!/duplicate column/i.test(e.message)) {
+          console.warn(`⚠️ [MySQL] Migration skipped: ${e.message}`);
+        }
+      }
+    }
+
+    const userCols = [
+      'ADD COLUMN program_studi VARCHAR(100)',
+      'ADD COLUMN tempat_lahir VARCHAR(100)',
+      'ADD COLUMN tanggal_lahir DATE NULL',
+      'ADD COLUMN instagram VARCHAR(150)',
+      'ADD COLUMN linkedin VARCHAR(150)',
+      'ADD COLUMN foto_pribadi TEXT',
+      'ADD COLUMN tanda_tangan TEXT',
+    ];
+    for (const alter of userCols) {
+      try {
+        await pool.query(`ALTER TABLE users ${alter}`);
+      } catch (e) {
+        if (!/duplicate column/i.test(e.message)) {
+          console.warn(`⚠️ [MySQL] Migration skipped: ${e.message}`);
+        }
+      }
+    }
+
     // 4. Seed initial data if tables are empty
     const [userRows] = await pool.query('SELECT COUNT(*) as count FROM users');
     if (userRows[0].count === 0) {
@@ -159,6 +240,110 @@ export const initMySQL = async () => {
     console.warn(`⚠️ [MySQL] Could not connect to MySQL server (${error.message}). Falling back to JSON database engine.`);
     return null;
   }
+};
+
+const getDataType = async (pool, table, column) => {
+  const [rows] = await pool.query(
+    `SELECT DATA_TYPE FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [table, column]
+  );
+  return rows[0]?.DATA_TYPE || null;
+};
+
+/** Drop every foreign key constraint on a table. Returns how many were dropped. */
+const dropFks = async (pool, table) => {
+  const [rows] = await pool.query(
+    `SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+       AND REFERENCED_TABLE_NAME IS NOT NULL`,
+    [table]
+  );
+  for (const r of rows) {
+    await pool.query(`ALTER TABLE \`${table}\` DROP FOREIGN KEY \`${r.CONSTRAINT_NAME}\``);
+  }
+  return rows.length;
+};
+
+/**
+ * Migrate legacy INT id columns to BIGINT. MySQL rejects type changes on any
+ * FK-linked column (even FKs from OTHER tables pointing at this one) and
+ * ignores FOREIGN_KEY_CHECKS for DDL, so the sequence is:
+ * drop every FK on users & teams → alter columns → clean dangling refs → re-add FKs.
+ * Idempotent: no-op when every id column is already BIGINT.
+ */
+const migrateIdTypes = async (pool) => {
+  const needUsers = (await getDataType(pool, 'startups', 'id')) !== 'bigint'
+    || (await getDataType(pool, 'users', 'id')) !== 'bigint';
+  const needComps = (await getDataType(pool, 'competitions', 'id')) !== 'bigint'
+    || (await getDataType(pool, 'teams', 'id')) !== 'bigint';
+  const needSubs = (await getDataType(pool, 'submissions', 'id')) !== 'bigint';
+
+  if (!needUsers && !needComps && !needSubs) return;
+
+  // Drop ALL FKs on both tables — teams FKs reference users.id (incoming), so
+  // changing users.id requires them dropped too, not just users_ibfk_1.
+  const droppedTeamsFks = await dropFks(pool, 'teams');
+  const droppedUsersFks = await dropFks(pool, 'users');
+
+  if (needUsers) {
+    await pool.query('ALTER TABLE startups MODIFY id BIGINT NOT NULL AUTO_INCREMENT');
+    await pool.query('ALTER TABLE users MODIFY id BIGINT NOT NULL AUTO_INCREMENT, MODIFY startup_id BIGINT NULL');
+    console.log('🔧 [MySQL] Migrasi kolom id users/startups → BIGINT selesai');
+  }
+
+  if (needComps) {
+    await pool.query('ALTER TABLE competitions MODIFY id BIGINT NOT NULL AUTO_INCREMENT');
+    await pool.query(
+      'ALTER TABLE teams MODIFY id BIGINT NOT NULL AUTO_INCREMENT, MODIFY competition_id BIGINT NOT NULL, MODIFY leader_id BIGINT NOT NULL, MODIFY advisor_id BIGINT NULL'
+    );
+    console.log('🔧 [MySQL] Migrasi kolom id competitions/teams → BIGINT selesai');
+  }
+
+  if (needSubs) {
+    await pool.query(
+      'ALTER TABLE submissions MODIFY id BIGINT NOT NULL AUTO_INCREMENT, MODIFY team_id BIGINT NULL, MODIFY applicant_id BIGINT NOT NULL'
+    );
+    console.log('🔧 [MySQL] Migrasi kolom id submissions → BIGINT selesai');
+  }
+
+  // Clean dangling references before restoring FK constraints
+  await pool.query(
+    'UPDATE users SET startup_id = NULL WHERE startup_id IS NOT NULL AND startup_id NOT IN (SELECT id FROM startups)'
+  );
+  await pool.query(
+    'DELETE t FROM teams t LEFT JOIN competitions c ON c.id = t.competition_id WHERE c.id IS NULL'
+  );
+  await pool.query(
+    'DELETE t FROM teams t LEFT JOIN users u ON u.id = t.leader_id WHERE u.id IS NULL'
+  );
+  await pool.query(
+    'UPDATE teams SET advisor_id = NULL WHERE advisor_id IS NOT NULL AND advisor_id NOT IN (SELECT id FROM users)'
+  );
+
+  // Re-add all FKs (ignore "already exists"; warn on anything else)
+  const fkDefs = [
+    ['users', 'users_ibfk_1', 'startup_id', 'startups(id)', 'ON DELETE SET NULL'],
+    ['teams', 'teams_ibfk_1', 'competition_id', 'competitions(id)', 'ON DELETE CASCADE'],
+    ['teams', 'teams_ibfk_2', 'leader_id', 'users(id)', 'ON DELETE CASCADE'],
+    ['teams', 'teams_ibfk_3', 'advisor_id', 'users(id)', 'ON DELETE SET NULL'],
+  ];
+  const shouldRestore = (table) =>
+    (table === 'users' && (droppedUsersFks > 0 || needUsers)) ||
+    (table === 'teams' && (droppedTeamsFks > 0 || needComps));
+  for (const [table, name, col, ref, onDelete] of fkDefs) {
+    if (!shouldRestore(table)) continue;
+    try {
+      await pool.query(
+        `ALTER TABLE \`${table}\` ADD CONSTRAINT ${name} FOREIGN KEY (${col}) REFERENCES ${ref} ${onDelete}`
+      );
+    } catch (e) {
+      if (!/duplicate foreign key/i.test(e.message)) {
+        console.warn(`⚠️ [MySQL] Gagal memulihkan FK ${name}: ${e.message}`);
+      }
+    }
+  }
+  console.log('✅ [MySQL] Semua foreign key dipulihkan');
 };
 
 const seedDatabase = async (dbPool) => {
@@ -176,13 +361,13 @@ const seedDatabase = async (dbPool) => {
 
   // Seed users
   await dbPool.query(`
-    INSERT INTO users (id, name, email, password, role, nip_nim, phone, startup_id, startup_name) VALUES
-    (1, 'Admin Ko+Lab System', 'admin@kolab.id', '${hashedPassword}', 'admin', 'ADM-2026-001', '081234567890', 1, 'Teknologi Informasi'),
-    (2, 'Dr. Budi Santoso, M.T.', 'dosen@kolab.id', '${hashedPassword}', 'dosen', '198503122010121001', '081298765432', 1, 'Teknologi Informasi'),
-    (3, 'Prof. Siti Aminah, Ph.D.', 'siti.aminah@kolab.id', '${hashedPassword}', 'dosen', '197804152005012002', '081311223344', 2, 'Sistem Informasi'),
-    (4, 'Rina Wijaya', 'mahasiswa@kolab.id', '${hashedPassword}', 'mahasiswa', '2241720088', '085712348899', 1, 'Teknologi Informasi'),
-    (5, 'Ahmad Fauzi', 'ahmad.fauzi@student.kolab.id', '${hashedPassword}', 'mahasiswa', '2241720102', '081987654321', 1, 'Teknologi Informasi'),
-    (6, 'Dewi Lestari', 'dewi.lestari@student.kolab.id', '${hashedPassword}', 'mahasiswa', '2241720150', '085234567891', 2, 'Sistem Informasi')
+    INSERT INTO users (id, name, email, password, role, nip_nim, phone, startup_id, startup_name, position) VALUES
+    (1, 'Admin Ko+Lab System', 'admin@kolab.id', '${hashedPassword}', 'admin', 'ADM-2026-001', '081234567890', 1, 'Teknologi Informasi', 'Admin System'),
+    (2, 'Dr. Budi Santoso, M.T.', 'dosen@kolab.id', '${hashedPassword}', 'dosen', '198503122010121001', '081298765432', 1, 'Teknologi Informasi', 'Dosen Pembimbing'),
+    (3, 'Prof. Siti Aminah, Ph.D.', 'siti.aminah@kolab.id', '${hashedPassword}', 'dosen', '197804152005012002', '081311223344', 2, 'Sistem Informasi', 'Dosen Pembimbing'),
+    (4, 'Rina Wijaya', 'mahasiswa@kolab.id', '${hashedPassword}', 'mahasiswa', '2241720088', '085712348899', 1, 'Teknologi Informasi', 'CEO'),
+    (5, 'Ahmad Fauzi', 'ahmad.fauzi@student.kolab.id', '${hashedPassword}', 'mahasiswa', '2241720102', '081987654321', 1, 'Teknologi Informasi', 'CTO'),
+    (6, 'Dewi Lestari', 'dewi.lestari@student.kolab.id', '${hashedPassword}', 'mahasiswa', '2241720150', '085234567891', 2, 'Sistem Informasi', 'UI/UX Lead')
   `);
 
   // Seed competitions

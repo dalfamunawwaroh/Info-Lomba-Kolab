@@ -1,14 +1,26 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Menu, Search, Sun, Moon, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import useUIStore from '@/store/uiStore';
 import { getInitials } from '@/utils/helpers';
+import notificationService from '@/services/notificationService';
 
 export function Header() {
   const { user } = useAuth();
   const { setSidebarOpen, theme, toggleTheme } = useUIStore();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const profilePath = `/${user?.role || 'admin'}/profile`;
+  const settingsPath = `/${user?.role || 'admin'}/settings`;
+  const notificationsPath = `/${user?.role || 'admin'}/notifications`;
+
+  useEffect(() => {
+    if (!user) return;
+    notificationService.getNotifications()
+      .then((res) => setUnreadCount(res.data?.unread_count || 0))
+      .catch(() => {});
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-30 flex h-24 items-center justify-between px-6 lg:px-10 bg-white/80 dark:bg-[#0B0D11]/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/10 mb-6 transition-all duration-300">
@@ -40,20 +52,28 @@ export function Header() {
           )}
         </button>
 
-        {/* Settings Button */}
+        {/* Settings Button → Settings Page */}
         <Link 
-          to={profilePath}
-          title="Pengaturan & Profil"
+          to={settingsPath}
+          title="Pengaturan"
           className="p-3 rounded-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-[#9333EA] dark:hover:text-purple-400 hover:border-purple-500/40 transition-all duration-300 shadow-sm hover:scale-105"
         >
           <Settings size={20} className="transition-transform hover:rotate-45" />
         </Link>
 
-        {/* Notification Bell */}
-        <button className="relative p-3 rounded-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 hover:border-purple-500/40 text-slate-700 dark:text-slate-300 transition-all shadow-sm hover:scale-105">
+        {/* Notification Bell → Notifications Page */}
+        <Link 
+          to={notificationsPath}
+          title="Notifikasi"
+          className="relative p-3 rounded-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 hover:border-purple-500/40 text-slate-700 dark:text-slate-300 transition-all shadow-sm hover:scale-105"
+        >
           <Bell size={20} className="transition-transform hover:scale-110" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-purple-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-        </button>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-slate-900">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </Link>
 
         <div className="h-10 w-[1px] bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
 

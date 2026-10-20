@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(30),
   startup_id INT,
   startup_name VARCHAR(150),
+  position VARCHAR(100),
   expertise JSON,
   skills JSON,
   status ENUM('active', 'inactive') DEFAULT 'active',

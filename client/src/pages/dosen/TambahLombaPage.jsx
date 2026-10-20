@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { CompetitionForm } from '@/components/competition/CompetitionForm';
 import competitionService from '@/services/competitionService';
 import useUIStore from '@/store/uiStore';
 import { useState } from 'react';
 
 export default function TambahLombaPage() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
   const [loading, setLoading] = useState(false);
   const addToast = useUIStore((s) => s.addToast);
   const navigate = useNavigate();
@@ -14,7 +17,7 @@ export default function TambahLombaPage() {
     try {
       await competitionService.createCompetition(data);
       addToast({ type: 'success', message: 'Lomba berhasil ditambahkan' });
-      navigate('/dosen/competitions');
+      navigate(isAdmin ? '/admin/competitions' : '/dosen/competitions');
     } catch (err) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Gagal menambah lomba' });
     } finally {

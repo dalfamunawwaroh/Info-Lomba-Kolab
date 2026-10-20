@@ -1,131 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Search, Calendar, FileText, CheckCircle2, Clock, Eye,
   FileUp, ShieldCheck, MessageSquare, ListTodo, Bell, Send,
   Sparkles, Quote, Users, X, UserPlus, Activity, Timer,
-  GraduationCap, BarChart3
+  GraduationCap, BarChart3, Loader2
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
+import activityService from '@/services/activityService';
 
-// ============ Mock: kegiatan mahasiswa (Notion checklist, dokumen privat tim, similarity) ============
-const MOCK_TEAMS = [
-  {
-    id: 'ACT-001',
-    team_name: 'Tim CyberNova Tech',
-    competition: 'National Hackathon Ko+Lab 2026',
-    category: 'Software Development',
-    leader: 'Rina Wijaya',
-    advisor: 'Dr. Budi Santoso, M.T.',
-    updated_at: '10 menit yang lalu',
-    calendar_deadline: '2026-11-15',
-    days_left: 34,
-    checklist: {
-      total: 8,
-      completed: 6,
-      items: [
-        { task: 'Penyusunan Proposal Inovasi', done: true },
-        { task: 'Wireframe & Design System Figma', done: true },
-        { task: 'Setup Repo GitHub & Backend Architecture', done: true },
-        { task: 'Uji Coba Similarity / Turnitin Naskah', done: true },
-        { task: 'Perekaman Pitch Video 3 Menit', done: true },
-        { task: 'Dokumen Final Berkas Administrasi', done: true },
-        { task: 'Review Feedback Dosen Pembimbing', done: false },
-        { task: 'Final Submission ke Portal Panitia', done: false },
-      ],
-    },
-    latest_document: {
-      filename: 'Proposal_CyberNova_SmartCity_v2.pdf',
-      filesize: '4.8 MB',
-      uploaded_by: 'Rina Wijaya',
-      uploaded_at: '12 Okt 2026, 11:20 WIB',
-      similarity_score: '9%',
-      similarity_status: 'safe',
-      dosen_review: {
-        status: 'reviewed',
-        feedback: 'Latar belakang masalah dan use-case AI sudah tajam. Perjelas arsitektur fallback API saat offline.',
-        review_date: '12 Okt 2026, 13:45 WIB',
-      },
-    },
-    team_members: ['Rina Wijaya (Ketua)', 'Ahmad Fauzi (AI Engineer)', 'Dewi Lestari (UI/UX)'],
-  },
-  {
-    id: 'ACT-002',
-    team_name: 'InnovateX Design',
-    competition: 'Indonesian UI/UX Design Challenge 2026',
-    category: 'Design & Experience',
-    leader: 'Dewi Lestari',
-    advisor: 'Prof. Siti Aminah, Ph.D.',
-    updated_at: '2 jam yang lalu',
-    calendar_deadline: '2026-10-30',
-    days_left: 18,
-    checklist: {
-      total: 6,
-      completed: 4,
-      items: [
-        { task: 'User Persona & Journey Map', done: true },
-        { task: 'Competitive Audit & Moodboard', done: true },
-        { task: 'High-Fidelity Interactive Prototype', done: true },
-        { task: 'Case Study Document (PDF)', done: true },
-        { task: 'Uji Aksesibilitas WCAG 2.1 & Similarity Check', done: false },
-        { task: 'Konsultasi Pra-Deadline dengan Pembimbing', done: false },
-      ],
-    },
-    latest_document: {
-      filename: 'DesignSystem_CaseStudy_InnovateX.pdf',
-      filesize: '12.4 MB',
-      uploaded_by: 'Dewi Lestari',
-      uploaded_at: '12 Okt 2026, 09:15 WIB',
-      similarity_score: '14%',
-      similarity_status: 'safe',
-      dosen_review: {
-        status: 'pending',
-        feedback: 'Menunggu review dari dosen pembimbing.',
-        review_date: null,
-      },
-    },
-    team_members: ['Dewi Lestari (Ketua)', 'Bambang Kusuma (UX Researcher)'],
-  },
-  {
-    id: 'ACT-003',
-    team_name: 'AlphaGen BioAI',
-    competition: 'AI Startup & Business Plan Competition',
-    category: 'Business & Pitch',
-    leader: 'Ahmad Fauzi',
-    advisor: 'Dr. Budi Santoso, M.T.',
-    updated_at: '5 jam yang lalu',
-    calendar_deadline: '2026-12-05',
-    days_left: 54,
-    checklist: {
-      total: 7,
-      completed: 3,
-      items: [
-        { task: 'Executive Summary & Business Model Canvas', done: true },
-        { task: 'Market Sizing TAM/SAM/SOM Calculation', done: true },
-        { task: 'Draft Proposal Pitch Deck v1', done: true },
-        { task: 'Uji Similarity / Deteksi Orisinalitas', done: false },
-        { task: 'Proyeksi Finansial 3 Tahun', done: false },
-        { task: 'Simulasi Tanya Jawab dengan Dosen', done: false },
-        { task: 'Pengunggahan Final Berkas Pitching', done: false },
-      ],
-    },
-    latest_document: {
-      filename: 'PitchDeck_AlphaGen_MedicalAI_Draft.pdf',
-      filesize: '8.1 MB',
-      uploaded_by: 'Ahmad Fauzi',
-      uploaded_at: '11 Okt 2026, 17:30 WIB',
-      similarity_score: '28%',
-      similarity_status: 'warning',
-      dosen_review: {
-        status: 'revision_required',
-        feedback: 'Tingkat kesamaan teks di bab Kajian Pustaka 28% masih terlalu tinggi. Segera parafrase sebelum submisi resmi.',
-        review_date: '12 Okt 2026, 08:30 WIB',
-      },
-    },
-    team_members: ['Ahmad Fauzi (Ketua)', 'Citra Amelia (Business Analyst)', 'Faris Hakim (Financial Model)'],
-  },
-];
-
-// ============ Mock: kegiatan dosen (review, pembimbingan, monitoring) ============
+// ============ Config ============
 const ACTIVITY_META = {
   review: { label: 'Review Dokumen', icon: MessageSquare, chip: 'bg-purple-100 text-[#6C1B75] dark:bg-purple-500/15 dark:text-purple-300', dot: 'bg-[#9333EA]' },
   similarity: { label: 'Uji Similarity', icon: ShieldCheck, chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300', dot: 'bg-indigo-500' },
@@ -135,53 +18,6 @@ const ACTIVITY_META = {
   reminder: { label: 'Reminder', icon: Bell, chip: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300', dot: 'bg-rose-500' },
 };
 
-const MOCK_DOSEN = [
-  {
-    id: 'DSN-001',
-    name: 'Dr. Budi Santoso, M.T.',
-    specialty: 'AI & Software Engineering',
-    teams: ['Tim CyberNova Tech', 'AlphaGen BioAI'],
-    reviews_given: 8,
-    avg_response: '2.5 jam',
-    badge: 'Sangat Responsif',
-    feed: [
-      { type: 'review', text: 'Memberikan feedback pada Proposal_CyberNova_SmartCity_v2.pdf', time: '12 Okt, 13:45 WIB' },
-      { type: 'review', text: 'Meminta revisi PitchDeck_AlphaGen — similarity 28% terlalu tinggi', time: '12 Okt, 08:30 WIB' },
-      { type: 'assign', text: 'Menerima ajukan diri sebagai pembimbing Tim AlphaGen BioAI', time: '2 hari lalu' },
-      { type: 'meeting', text: 'Sesi konsultasi pra-deadline dengan Tim CyberNova Tech', time: '3 hari lalu' },
-    ],
-  },
-  {
-    id: 'DSN-002',
-    name: 'Prof. Siti Aminah, Ph.D.',
-    specialty: 'UI/UX & Design Research',
-    teams: ['InnovateX Design'],
-    reviews_given: 5,
-    avg_response: '6 jam',
-    badge: 'Responsif',
-    feed: [
-      { type: 'review', text: 'Mulai review DesignSystem_CaseStudy_InnovateX.pdf', time: '1 jam lalu' },
-      { type: 'approve', text: 'Menyetujui perubahan anggota tim InnovateX Design', time: '1 hari lalu' },
-      { type: 'meeting', text: 'Workshop design thinking untuk tim bimbingan', time: '4 hari lalu' },
-    ],
-  },
-  {
-    id: 'DSN-003',
-    name: 'Dr. Andika Pratama, S.T., M.T.',
-    specialty: 'Robotics & Embedded System',
-    teams: ['Sigma Robotics'],
-    reviews_given: 3,
-    avg_response: '12 jam',
-    badge: 'Perlu Diperhatikan',
-    feed: [
-      { type: 'reminder', text: 'Mengirim reminder deadline Kontes Robot Indonesia (H-7)', time: '30 menit lalu' },
-      { type: 'similarity', text: 'Menjalankan uji similarity Laporan_Kemajuan_Sigma_Minggu3.pdf (11%)', time: '5 jam lalu' },
-      { type: 'assign', text: 'Ditugaskan sebagai pembimbing Sigma Robotics oleh admin', time: '1 minggu lalu' },
-    ],
-  },
-];
-
-// ============ Config ============
 const REVIEW_META = {
   reviewed: { label: 'Sudah Direview', pill: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' },
   pending: { label: 'Menunggu Feedback', pill: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
@@ -201,6 +37,15 @@ const DSN_FILTERS = [
   { value: 'bimbingan', label: 'Pembimbingan' },
   { value: 'reminder', label: 'Reminder & Konsultasi' },
 ];
+
+const ACTIVITY_LOG_ICON = {
+  user: Users,
+  startup: Sparkles,
+  team: Users,
+  competition: Calendar,
+  submission: FileText,
+  broadcast: Send,
+};
 
 // ============ Building blocks ============
 
@@ -229,7 +74,7 @@ function DeadlinePill({ daysLeft, deadline }) {
       : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300';
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${tone}`}>
-      <Calendar size={13} /> {deadline} • sisa {daysLeft} hari
+      <Calendar size={13} /> {deadline || 'Tanpa deadline'} • sisa {daysLeft} hari
     </span>
   );
 }
@@ -255,7 +100,7 @@ function KpiCard({ title, value, desc, icon: Icon, tint }) {
 function TeamCard({ team, onDetail }) {
   const progressPercent = Math.round((team.checklist.completed / team.checklist.total) * 100);
   const review = team.latest_document.dosen_review;
-  const reviewMeta = REVIEW_META[review.status];
+  const reviewMeta = REVIEW_META[review.status] || REVIEW_META.pending;
   const doc = team.latest_document;
 
   return (
@@ -404,8 +249,11 @@ function DosenCard({ dosen }) {
             <Activity size={15} className="text-[#9333EA]" /> Aktivitas Terbaru
           </h4>
           <div className="space-y-4">
+            {dosen.feed.length === 0 && (
+              <p className="text-xs text-slate-400 text-center py-2">Belum ada aktivitas tercatat</p>
+            )}
             {dosen.feed.map((act, i) => {
-              const meta = ACTIVITY_META[act.type];
+              const meta = ACTIVITY_META[act.type] || ACTIVITY_META.assign;
               return (
                 <div key={i} className="relative flex items-start gap-3">
                   {i < dosen.feed.length - 1 && (
@@ -445,8 +293,8 @@ function WorkspaceModal({ team, onClose }) {
   const progressPercent = Math.round((team.checklist.completed / team.checklist.total) * 100);
   const doc = team.latest_document;
   const review = doc.dosen_review;
-  const reviewMeta = REVIEW_META[review.status];
-  const simNum = parseInt(doc.similarity_score);
+  const reviewMeta = REVIEW_META[review.status] || REVIEW_META.pending;
+  const simNum = parseInt(doc.similarity_score) || 0;
   const simSafe = doc.similarity_status === 'safe';
 
   return (
@@ -472,7 +320,7 @@ function WorkspaceModal({ team, onClose }) {
               </div>
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[11px] font-bold text-white/90 mb-2">
-                  <Sparkles size={12} /> {team.category}
+                  <Sparkles size={12} /> {team.category || 'Umum'}
                 </span>
                 <h3 className="text-2xl font-black text-white tracking-tight leading-tight">
                   {team.team_name}
@@ -491,7 +339,7 @@ function WorkspaceModal({ team, onClose }) {
           {/* Quick stats strip */}
           <div className="relative z-10 px-8 pb-6 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-xs font-semibold text-white/90">
-              <Calendar size={13} /> Deadline: {team.calendar_deadline}
+              <Calendar size={13} /> Deadline: {team.calendar_deadline || '-'}
             </span>
             <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full backdrop-blur-sm text-xs font-bold ${
               team.days_left <= 7 ? 'bg-rose-400/30 text-rose-100' : team.days_left <= 21 ? 'bg-amber-400/30 text-amber-100' : 'bg-emerald-400/30 text-emerald-100'
@@ -744,19 +592,42 @@ export default function StudentActivityPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [detailTarget, setDetailTarget] = useState(null);
+  const [teams, setTeams] = useState([]);
+  const [dosenList, setDosenList] = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const addToast = useUIStore((s) => s.addToast);
+
+  // Fetch both roles on mount so tab switching is instant
+  const loadActivities = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      activityService.getActivities({ role: 'mahasiswa' }).catch(() => ({ data: [] })),
+      activityService.getActivities({ role: 'dosen' }).catch(() => ({ data: [] })),
+    ])
+      .then(([mhsRes, dsnRes]) => {
+        setTeams(mhsRes.data || []);
+        setDosenList(dsnRes.data || []);
+        setActivityLog(mhsRes.activity_log || dsnRes.activity_log || []);
+      })
+      .catch(() => addToast({ type: 'error', message: 'Gagal memuat data aktivitas' }))
+      .finally(() => setLoading(false));
+  }, [addToast]);
+
+  useEffect(() => { loadActivities(); }, [loadActivities]);
 
   const filteredTeams = useMemo(() => {
     const q = searchTerm.toLowerCase();
-    return MOCK_TEAMS.filter((t) => {
+    return teams.filter((t) => {
       const matchSearch =
         t.team_name.toLowerCase().includes(q) ||
-        t.leader.toLowerCase().includes(q) ||
-        t.competition.toLowerCase().includes(q) ||
-        t.advisor.toLowerCase().includes(q);
-      const matchFilter = filter === 'all' || t.latest_document.dosen_review.status === filter;
+        (t.leader || '').toLowerCase().includes(q) ||
+        (t.competition || '').toLowerCase().includes(q) ||
+        (t.advisor || '').toLowerCase().includes(q);
+      const matchFilter = filter === 'all' || (t.latest_document?.dosen_review?.status) === filter;
       return matchSearch && matchFilter;
     });
-  }, [searchTerm, filter]);
+  }, [teams, searchTerm, filter]);
 
   const filteredDosen = useMemo(() => {
     const q = searchTerm.toLowerCase();
@@ -765,29 +636,30 @@ export default function StudentActivityPage() {
       (filter === 'review' && (type === 'review' || type === 'similarity')) ||
       (filter === 'bimbingan' && (type === 'assign' || type === 'approve')) ||
       (filter === 'reminder' && (type === 'reminder' || type === 'meeting'));
-    return MOCK_DOSEN
-      .filter((d) => d.name.toLowerCase().includes(q) || d.specialty.toLowerCase().includes(q) || d.teams.some((t) => t.toLowerCase().includes(q)))
+    return dosenList
+      .filter((d) => d.name.toLowerCase().includes(q) || (d.specialty || '').toLowerCase().includes(q) || d.teams.some((t) => t.toLowerCase().includes(q)))
       .map((d) => ({ ...d, feed: d.feed.filter((a) => matchType(a.type)) }))
       .filter((d) => d.feed.length > 0);
-  }, [searchTerm, filter]);
+  }, [dosenList, searchTerm, filter]);
 
-  const needReview = MOCK_TEAMS.filter((t) => t.latest_document.dosen_review.status === 'pending').length;
-  const reviewed = MOCK_TEAMS.filter((t) => t.latest_document.dosen_review.status === 'reviewed').length;
-  const flagged = MOCK_TEAMS.filter((t) => t.latest_document.similarity_status === 'warning').length;
-  const totalReviews = MOCK_DOSEN.reduce((n, d) => n + d.reviews_given, 0);
+  const needReview = teams.filter((t) => t.latest_document?.dosen_review?.status === 'pending').length;
+  const reviewed = teams.filter((t) => t.latest_document?.dosen_review?.status === 'reviewed').length;
+  const flagged = teams.filter((t) => t.latest_document?.similarity_status === 'warning').length;
+  const totalReviews = dosenList.reduce((n, d) => n + (d.reviews_given || 0), 0);
+  const totalMentoredTeams = dosenList.reduce((n, d) => n + d.teams.length, 0);
 
   const kpis = tab === 'mahasiswa'
     ? [
-      { title: 'Tim Aktif Berprogres', value: `${MOCK_TEAMS.length} Tim`, desc: 'Ruang kerja tim aktif', icon: Users, tint: { blob: 'bg-purple-300', text: 'text-[#6C1B75] dark:text-purple-300', chip: 'bg-purple-100 text-[#6C1B75] dark:bg-purple-500/15 dark:text-purple-300' } },
+      { title: 'Tim Aktif Berprogres', value: `${teams.length} Tim`, desc: 'Ruang kerja tim aktif', icon: Users, tint: { blob: 'bg-purple-300', text: 'text-[#6C1B75] dark:text-purple-300', chip: 'bg-purple-100 text-[#6C1B75] dark:bg-purple-500/15 dark:text-purple-300' } },
       { title: 'Feedback Dosen Selesai', value: `${reviewed} Dokumen`, desc: 'Sudah diperiksa & diberi masukan', icon: CheckCircle2, tint: { blob: 'bg-emerald-300', text: 'text-emerald-600 dark:text-emerald-300', chip: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300' } },
       { title: 'Menunggu Feedback', value: `${needReview} Berkas`, desc: 'Perlu respon dosen pembimbing', icon: Clock, tint: { blob: 'bg-amber-300', text: 'text-amber-600 dark:text-amber-300', chip: 'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300' } },
       { title: 'Peringatan Similarity', value: `${flagged} Naskah`, desc: 'Kemiripan teks > 20%', icon: ShieldCheck, tint: { blob: 'bg-rose-300', text: 'text-rose-600 dark:text-rose-300', chip: 'bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300' } },
     ]
     : [
-      { title: 'Dosen Aktif', value: `${MOCK_DOSEN.length} Orang`, desc: 'Memiliki tim bimbingan', icon: GraduationCap, tint: { blob: 'bg-purple-300', text: 'text-[#6C1B75] dark:text-purple-300', chip: 'bg-purple-100 text-[#6C1B75] dark:bg-purple-500/15 dark:text-purple-300' } },
+      { title: 'Dosen Aktif', value: `${dosenList.length} Orang`, desc: 'Memiliki tim bimbingan', icon: GraduationCap, tint: { blob: 'bg-purple-300', text: 'text-[#6C1B75] dark:text-purple-300', chip: 'bg-purple-100 text-[#6C1B75] dark:bg-purple-500/15 dark:text-purple-300' } },
       { title: 'Review Diberikan', value: `${totalReviews} Review`, desc: 'Feedback & pemeriksaan dokumen', icon: MessageSquare, tint: { blob: 'bg-emerald-300', text: 'text-emerald-600 dark:text-emerald-300', chip: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300' } },
-      { title: 'Tim Dibimbing', value: `${MOCK_DOSEN.reduce((n, d) => n + d.teams.length, 0)} Tim`, desc: 'Tersebar di 3 bidang', icon: Users, tint: { blob: 'bg-blue-300', text: 'text-blue-600 dark:text-blue-300', chip: 'bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300' } },
-      { title: 'Rata-rata Respon', value: '6.8 Jam', desc: 'Waktu feedback dosen', icon: Timer, tint: { blob: 'bg-amber-300', text: 'text-amber-600 dark:text-amber-300', chip: 'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300' } },
+      { title: 'Tim Dibimbing', value: `${totalMentoredTeams} Tim`, desc: 'Tim aktif dengan dosen pembimbing', icon: Users, tint: { blob: 'bg-blue-300', text: 'text-blue-600 dark:text-blue-300', chip: 'bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300' } },
+      { title: 'Rata-rata Respon', value: 'Cepat', desc: 'Waktu feedback dosen', icon: Timer, tint: { blob: 'bg-amber-300', text: 'text-amber-600 dark:text-amber-300', chip: 'bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300' } },
     ];
 
   const filters = tab === 'mahasiswa' ? MHS_FILTERS : DSN_FILTERS;
@@ -831,72 +703,139 @@ export default function StudentActivityPage() {
         </div>
       </div>
 
-      {/* KPI */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {kpis.map((k) => <KpiCard key={k.title} {...k} />)}
-      </div>
-
-      {/* Search + filter pills */}
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-        <div className="relative flex-1">
-          <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder={tab === 'mahasiswa' ? 'Cari tim, ketua, dosen, atau lomba...' : 'Cari nama dosen, bidang, atau tim bimbingan...'}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-full py-3.5 text-sm shadow-sm focus:ring-2 focus:ring-purple-500/30 focus:border-purple-300 outline-none text-slate-900 dark:text-white"
-            style={{ paddingLeft: '3.25rem' }}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {filters.map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all ${
-                filter === f.value
-                  ? 'bg-gradient-to-r from-[#9333EA] to-[#6C1B75] text-white shadow-lg shadow-purple-500/25'
-                  : 'bg-white dark:bg-white/5 text-slate-500 dark:text-slate-300 border border-slate-100 dark:border-white/10 hover:border-purple-300 hover:text-[#6C1B75]'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Content */}
-      {tab === 'mahasiswa' ? (
-        filteredTeams.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 mx-auto rounded-3xl bg-purple-100 dark:bg-purple-500/15 text-[#6C1B75] dark:text-purple-300 flex items-center justify-center">
-              <Search size={26} />
-            </div>
-            <p className="mt-4 font-bold text-slate-700 dark:text-slate-200">Tidak ada tim yang cocok</p>
-            <p className="text-sm text-slate-400 mt-1">Coba ubah kata kunci atau filter status.</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {filteredTeams.map((team) => (
-              <TeamCard key={team.id} team={team} onDetail={() => setDetailTarget(team)} />
-            ))}
-          </div>
-        )
-      ) : filteredDosen.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-purple-100 dark:bg-purple-500/15 text-[#6C1B75] dark:text-purple-300 flex items-center justify-center">
-            <Search size={26} />
-          </div>
-          <p className="mt-4 font-bold text-slate-700 dark:text-slate-200">Tidak ada aktivitas dosen yang cocok</p>
-          <p className="text-sm text-slate-400 mt-1">Coba ubah kata kunci atau filter kategori.</p>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <Loader2 size={40} className="animate-spin text-[#9333EA]" />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Memuat data aktivitas dari server...</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {filteredDosen.map((dosen) => (
-            <DosenCard key={dosen.id} dosen={dosen} />
-          ))}
-        </div>
+        <>
+          {/* KPI */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {kpis.map((k) => <KpiCard key={k.title} {...k} />)}
+          </div>
+
+          {/* Search + filter pills */}
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+            <div className="relative flex-1">
+              <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder={tab === 'mahasiswa' ? 'Cari tim, ketua, dosen, atau lomba...' : 'Cari nama dosen, bidang, atau tim bimbingan...'}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-full py-3.5 text-sm shadow-sm focus:ring-2 focus:ring-purple-500/30 focus:border-purple-300 outline-none text-slate-900 dark:text-white"
+                style={{ paddingLeft: '3.25rem' }}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {filters.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all ${
+                    filter === f.value
+                      ? 'bg-gradient-to-r from-[#9333EA] to-[#6C1B75] text-white shadow-lg shadow-purple-500/25'
+                      : 'bg-white dark:bg-white/5 text-slate-500 dark:text-slate-300 border border-slate-100 dark:border-white/10 hover:border-purple-300 hover:text-[#6C1B75]'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content */}
+          {tab === 'mahasiswa' ? (
+            filteredTeams.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-purple-100 dark:bg-purple-500/15 text-[#6C1B75] dark:text-purple-300 flex items-center justify-center">
+                  <Search size={26} />
+                </div>
+                <p className="mt-4 font-bold text-slate-700 dark:text-slate-200">Tidak ada tim yang cocok</p>
+                <p className="text-sm text-slate-400 mt-1">Coba ubah kata kunci atau filter status.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredTeams.map((team) => (
+                  <TeamCard key={team.id} team={team} onDetail={() => setDetailTarget(team)} />
+                ))}
+              </div>
+            )
+          ) : filteredDosen.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-purple-100 dark:bg-purple-500/15 text-[#6C1B75] dark:text-purple-300 flex items-center justify-center">
+                <Search size={26} />
+              </div>
+              <p className="mt-4 font-bold text-slate-700 dark:text-slate-200">Tidak ada aktivitas dosen yang cocok</p>
+              <p className="text-sm text-slate-400 mt-1">Coba ubah kata kunci atau filter kategori.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filteredDosen.map((dosen) => (
+                <DosenCard key={dosen.id} dosen={dosen} />
+              ))}
+            </div>
+          )}
+
+          {/* Riwayat Aktivitas — dari tabel `activities` (MySQL) */}
+          <div className="rounded-3xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-6 md:p-8 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                  <ListTodo size={18} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm md:text-base">
+                    Riwayat Aktivitas Sistem
+                  </h3>
+                  <p className="text-[11px] md:text-xs text-slate-400">
+                    Tersimpan di tabel <code className="font-bold">activities</code> — log nyata dari aksi admin, dosen & mahasiswa.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                {activityLog.length} entri
+              </span>
+            </div>
+
+            {activityLog.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                Belum ada aktivitas tercatat. Aksi seperti membuat user, startup, tim, atau lomba akan otomatis muncul di sini.
+              </p>
+            ) : (
+              <ul className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+                {activityLog.slice(0, 30).map((a) => {
+                  const Icon = ACTIVITY_LOG_ICON[a.entity_type] || Activity;
+                  return (
+                    <li
+                      key={a.id}
+                      className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5"
+                    >
+                      <span className="mt-0.5 shrink-0 w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 flex items-center justify-center">
+                        <Icon size={15} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{a.title}</p>
+                        {a.description && (
+                          <p className="text-xs text-slate-400 truncate">{a.description}</p>
+                        )}
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          {a.actor_name || 'Sistem'}{' '}
+                          {a.actor_role ? `(${a.actor_role})` : ''} •{' '}
+                          {a.created_at ? new Date(a.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-lg bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300">
+                        {a.action}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </>
       )}
 
       {detailTarget && <WorkspaceModal team={detailTarget} onClose={() => setDetailTarget(null)} />}

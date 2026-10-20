@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { PORT } from './config/index.js';
 import { initMySQL, isMySQLConnected } from './db/mysql.js';
+import { reconcileMySQL } from './db/sync.js';
 
 // Import Routes
 import authRoutes from './routes/authRoutes.js';
@@ -14,6 +15,8 @@ import submissionRoutes from './routes/submissionRoutes.js';
 import advisorRoutes from './routes/advisorRoutes.js';
 import broadcastRoutes from './routes/broadcastRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
 
@@ -23,8 +26,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Initialize MySQL Database Connection & Migrations
-initMySQL();
+// Initialize MySQL Database Connection & Migrations,
+// then mirror data.json into MySQL so the DB always matches the app.
+initMySQL().then((pool) => {
+  if (pool) reconcileMySQL();
+});
 
 // API Health Check
 app.get('/api/v1/health', (req, res) => {
@@ -47,6 +53,8 @@ app.use('/api/v1/submissions', submissionRoutes);
 app.use('/api/v1/advisors', advisorRoutes);
 app.use('/api/v1/broadcasts', broadcastRoutes);
 app.use('/api/v1/admin/stats', statsRoutes);
+app.use('/api/v1/activities', activityRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -71,4 +79,12 @@ app.listen(PORT, () => {
   console.log(` 🌐 Server URL : http://localhost:${PORT}`);
   console.log(` 📡 API Prefix : http://localhost:${PORT}/api/v1`);
   console.log(`=======================================================`);
+});
+
+// ── Penanganan crash: log error tak tertangani, server TIDAK mati senyap ──
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️ [Crash] Unhandled Rejection (server tetap berjalan):', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ [Crash] Uncaught Exception (server tetap berjalan):', err?.stack || err);
 });

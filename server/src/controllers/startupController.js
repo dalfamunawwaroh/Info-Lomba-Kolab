@@ -1,9 +1,16 @@
 import { db } from '../db/index.js';
+import { syncStartup, deleteRow, logActivity } from '../db/sync.js';
 
 export const getStartups = (req, res) => {
   try {
     const data = db.read();
-    return res.json({ success: true, data: data.startups });
+    const startupsWithCount = data.startups.map((s) => ({
+      ...s,
+      _count: {
+        users: data.users.filter((u) => u.startup_id === s.id).length,
+      },
+    }));
+    return res.json({ success: true, data: startupsWithCount });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -12,15 +19,15 @@ export const getStartups = (req, res) => {
 export const createStartup = (req, res) => {
   try {
     const { name, code, description } = req.body;
-    if (!name || !code) {
-      return res.status(400).json({ success: false, message: 'Nama dan kode startup / prodi wajib diisi' });
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Nama startup wajib diisi' });
     }
 
     const data = db.read();
     const newStartup = {
       id: Date.now(),
       name,
-      code,
+      code: code || name.substring(0, 3).toUpperCase(),
       description: description || '',
       status: 'active',
       created_at: new Date().toISOString().split('T')[0],
@@ -28,6 +35,16 @@ export const createStartup = (req, res) => {
 
     data.startups.push(newStartup);
     db.write(data);
+
+    syncStartup(newStartup);
+    logActivity({
+      entity_type: 'startup',
+      entity_id: newStartup.id,
+      action: 'create',
+      title: `Startup "${newStartup.name}" dibuat`,
+      description: `Kode: ${newStartup.code}`,
+      actor: req.user,
+    });
 
     return res.status(201).json({
       success: true,
@@ -53,6 +70,15 @@ export const updateStartup = (req, res) => {
     data.startups[index] = updated;
     db.write(data);
 
+    syncStartup(updated);
+    logActivity({
+      entity_type: 'startup',
+      entity_id: updated.id,
+      action: 'update',
+      title: `Startup "${updated.name}" diperbarui`,
+      actor: req.user,
+    });
+
     return res.json({ success: true, message: 'Startup berhasil diperbarui', data: updated });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -69,8 +95,18 @@ export const deleteStartup = (req, res) => {
       return res.status(404).json({ success: false, message: 'Startup tidak ditemukan' });
     }
 
+    const removed = data.startups[index];
     data.startups.splice(index, 1);
     db.write(data);
+
+    deleteRow('startups', Number(id));
+    logActivity({
+      entity_type: 'startup',
+      entity_id: Number(id),
+      action: 'delete',
+      title: `Startup "${removed.name}" dihapus`,
+      actor: req.user,
+    });
 
     return res.json({ success: true, message: 'Startup berhasil dihapus' });
   } catch (error) {

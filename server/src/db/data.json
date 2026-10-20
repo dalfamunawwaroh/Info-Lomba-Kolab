@@ -12,7 +12,8 @@
       "startup_name": "Teknologi Informasi",
       "status": "active",
       "avatar": null,
-      "created_at": "2026-01-10T08:00:00.000Z"
+      "created_at": "2026-01-10T08:00:00.000Z",
+      "position": "Admin System"
     },
     {
       "id": 2,
@@ -31,7 +32,8 @@
       ],
       "status": "active",
       "avatar": null,
-      "created_at": "2026-01-12T09:30:00.000Z"
+      "created_at": "2026-01-12T09:30:00.000Z",
+      "position": "Dosen Pembimbing"
     },
     {
       "id": 3,
@@ -50,7 +52,8 @@
       ],
       "status": "active",
       "avatar": null,
-      "created_at": "2026-01-14T10:00:00.000Z"
+      "created_at": "2026-01-14T10:00:00.000Z",
+      "position": "Dosen Pembimbing"
     },
     {
       "id": 4,
@@ -69,7 +72,8 @@
       ],
       "status": "active",
       "avatar": null,
-      "created_at": "2026-01-20T11:00:00.000Z"
+      "created_at": "2026-01-20T11:00:00.000Z",
+      "position": "CEO"
     },
     {
       "id": 5,
@@ -88,7 +92,8 @@
       ],
       "status": "active",
       "avatar": null,
-      "created_at": "2026-01-22T14:15:00.000Z"
+      "created_at": "2026-01-22T14:15:00.000Z",
+      "position": "CTO"
     },
     {
       "id": 6,
@@ -107,41 +112,60 @@
       ],
       "status": "active",
       "avatar": null,
-      "created_at": "2026-01-25T16:00:00.000Z"
+      "created_at": "2026-01-25T16:00:00.000Z",
+      "position": "UI/UX Lead"
+    },
+    {
+      "id": 1792393066687,
+      "name": "Dalfa Munawwarotul Mahmudah",
+      "email": "dalfamunawwaroh@gmail.com",
+      "password": "$2a$10$TIBxX0PEs2JgH/Bd1opaE.kHhcydNGi/VWMhbAfSrMG3Tl0zdZrU.",
+      "role": "mahasiswa",
+      "nip_nim": "607012430008",
+      "phone": "",
+      "startup_id": 1792393015541,
+      "startup_name": "JagoAI",
+      "position": "CFO",
+      "expertise": [],
+      "skills": [],
+      "status": "active",
+      "avatar": null,
+      "created_at": "2026-10-19T06:57:46.687Z"
+    },
+    {
+      "id": 1792393110424,
+      "name": "Fazrina Esa",
+      "email": "esa@info.com",
+      "password": "$2a$10$KgG7jak6LgB2y47dlnkTa.QCVr1gKc764I4f/Ev2lDmEbLdCEV/jy",
+      "role": "mahasiswa",
+      "nip_nim": "60701",
+      "phone": "",
+      "startup_id": 1792393015541,
+      "startup_name": "JagoAI",
+      "position": "CMO",
+      "expertise": [],
+      "skills": [],
+      "status": "active",
+      "avatar": null,
+      "created_at": "2026-10-19T06:58:30.424Z"
     }
   ],
   "startups": [
     {
-      "id": 1,
-      "name": "Teknologi Informasi",
-      "code": "TI",
-      "description": "Program Studi Teknologi Informasi",
+      "id": 1792393015541,
+      "name": "JagoAI",
+      "code": "JA",
+      "description": "",
       "status": "active",
-      "created_at": "2026-01-01"
+      "created_at": "2026-10-19"
     },
     {
-      "id": 2,
-      "name": "Sistem Informasi",
-      "code": "SI",
-      "description": "Program Studi Sistem Informasi Enterprise",
+      "id": 1792467752715,
+      "name": "Kroombox",
+      "code": "KB",
+      "description": "Kroomboxxxx",
       "status": "active",
-      "created_at": "2026-01-01"
-    },
-    {
-      "id": 3,
-      "name": "Teknik Komputer",
-      "code": "TK",
-      "description": "Program Studi Sistem Tertanam dan IoT",
-      "status": "active",
-      "created_at": "2026-01-01"
-    },
-    {
-      "id": 4,
-      "name": "Bisnis Digital",
-      "code": "BD",
-      "description": "Program Studi Kewirausahaan Digital & FinTech",
-      "status": "active",
-      "created_at": "2026-01-01"
+      "created_at": "2026-10-20"
     }
   ],
   "competitions": [
@@ -201,6 +225,31 @@
       ],
       "image_url": "https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80",
       "created_at": "2026-02-10"
+    },
+    {
+      "id": 1792393337334,
+      "title": "Hackaton",
+      "category": "Software Development",
+      "organizer": "Telkom Indonesia",
+      "description": "Bumi Berseru Fest mempertemukan semangat kolaborasi dengan inovasi lingkungan agar setiap langkah kecil dapat tumbuh menjadi dampak besar.",
+      "prize_pool": "Sekian",
+      "registration_fee": "Gratis",
+      "registration_url": "https://www.bumiberserufest.id/",
+      "registration_deadline": "2026-10-24",
+      "event_date": "2026-10-31",
+      "status": "upcoming",
+      "max_team_members": 4,
+      "needs_advisor": false,
+      "max_advisors": 1,
+      "location": "online",
+      "requirements": [
+        "PROPOSAL",
+        "cihuy"
+      ],
+      "guidebook_url": "https://drive.google.com/drive/home",
+      "image_url": "https://www.instagram.com/p/DPk2E4eE3Nb/",
+      "created_by": 1,
+      "created_at": "2026-10-19"
     }
   ],
   "teams": [
@@ -257,6 +306,219 @@
         }
       ],
       "created_at": "2026-02-20"
+    },
+    {
+      "id": 1792461577099,
+      "name": "Tim Cihuy 1",
+      "competition_id": 1792393337334,
+      "competition_title": "Hackaton",
+      "leader_id": 1792393110424,
+      "leader_name": "Fazrina Esa",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 1792393110424,
+          "name": "Fazrina Esa",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 4,
+          "name": "Rina Wijaya",
+          "role": "Anggota",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
+    },
+    {
+      "id": 1792461577141,
+      "name": "Tim Cihuy 2",
+      "competition_id": 1792393337334,
+      "competition_title": "Hackaton",
+      "leader_id": 5,
+      "leader_name": "Ahmad Fauzi",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 5,
+          "name": "Ahmad Fauzi",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 6,
+          "name": "Dewi Lestari",
+          "role": "Anggota",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
+    },
+    {
+      "id": 1792461577181,
+      "name": "Tim Cihuy 3",
+      "competition_id": 1792393337334,
+      "competition_title": "Hackaton",
+      "leader_id": 1792393066687,
+      "leader_name": "Dalfa Munawwarotul Mahmudah",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 1792393066687,
+          "name": "Dalfa Munawwarotul Mahmudah",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
+    },
+    {
+      "id": 1792468091238,
+      "name": "euy",
+      "competition_id": 1792393337334,
+      "competition_title": "Hackaton",
+      "leader_id": 4,
+      "leader_name": "Rina Wijaya",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 4,
+          "name": "Rina Wijaya",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 5,
+          "name": "Ahmad Fauzi",
+          "role": "Anggota",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 6,
+          "name": "Dewi Lestari",
+          "role": "Anggota",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 1792393066687,
+          "name": "Dalfa Munawwarotul Mahmudah",
+          "role": "Anggota",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 1792393110424,
+          "name": "Fazrina Esa",
+          "role": "Anggota",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
+    },
+    {
+      "id": 1792470598419,
+      "name": "cihuy",
+      "competition_id": 2,
+      "competition_title": "Indonesian UI/UX Design Challenge 2026",
+      "leader_id": 1792393110424,
+      "leader_name": "Fazrina Esa",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 1792393110424,
+          "name": "Fazrina Esa",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 4,
+          "name": "Rina Wijaya",
+          "role": "Anggota",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 5,
+          "name": "Ahmad Fauzi",
+          "role": "Anggota",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
+    },
+    {
+      "id": 1792470606497,
+      "name": "Tim 1",
+      "competition_id": 2,
+      "competition_title": "Indonesian UI/UX Design Challenge 2026",
+      "leader_id": 1792393110424,
+      "leader_name": "Fazrina Esa",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 1792393110424,
+          "name": "Fazrina Esa",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 6,
+          "name": "Dewi Lestari",
+          "role": "Anggota",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 1792393066687,
+          "name": "Dalfa Munawwarotul Mahmudah",
+          "role": "Anggota",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
+    },
+    {
+      "id": 1792470606659,
+      "name": "Tim 2",
+      "competition_id": 2,
+      "competition_title": "Indonesian UI/UX Design Challenge 2026",
+      "leader_id": 4,
+      "leader_name": "Rina Wijaya",
+      "advisor_id": null,
+      "advisor_name": null,
+      "advisor_status": "none",
+      "status": "forming",
+      "members": [
+        {
+          "user_id": 4,
+          "name": "Rina Wijaya",
+          "role": "Ketua Tim",
+          "status": "confirmed"
+        },
+        {
+          "user_id": 5,
+          "name": "Ahmad Fauzi",
+          "role": "Anggota",
+          "status": "confirmed"
+        }
+      ],
+      "created_at": "2026-10-20"
     }
   ],
   "submissions": [
@@ -334,6 +596,242 @@
       "recipientsCount": 150,
       "readCount": 0,
       "status": "Dijadualkan"
+    }
+  ],
+  "activities": [
+    {
+      "id": "1792470606696-98145",
+      "entity_type": "team",
+      "entity_id": 1792470606659,
+      "action": "create",
+      "title": "Tim \"Tim 2\" dibuat",
+      "description": "Lomba: Indonesian UI/UX Design Challenge 2026 • Anggota: 2",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:30:06.696Z"
+    },
+    {
+      "id": "1792470606536-89670",
+      "entity_type": "team",
+      "entity_id": 1792470606497,
+      "action": "create",
+      "title": "Tim \"Tim 1\" dibuat",
+      "description": "Lomba: Indonesian UI/UX Design Challenge 2026 • Anggota: 3",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:30:06.540Z"
+    },
+    {
+      "id": "1792470598429-96307",
+      "entity_type": "team",
+      "entity_id": 1792470598419,
+      "action": "create",
+      "title": "Tim \"cihuy\" dibuat",
+      "description": "Lomba: Indonesian UI/UX Design Challenge 2026 • Anggota: 3",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:29:58.429Z"
+    },
+    {
+      "id": "1792469327800-12037",
+      "entity_type": "user",
+      "entity_id": 1792469275940,
+      "action": "delete",
+      "title": "User \"Budi Test Kolom\" dihapus",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:08:47.800Z"
+    },
+    {
+      "id": "1792469327791-85048",
+      "entity_type": "team",
+      "entity_id": 1792469276174,
+      "action": "delete",
+      "title": "Tim \"Tim Uji Kolom\" dihapus",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:08:47.791Z"
+    },
+    {
+      "id": "1792469301831-56422",
+      "entity_type": "user",
+      "entity_id": 1792469275940,
+      "action": "update",
+      "title": "User \"Budi Test Kolom\" diperbarui",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:08:21.831Z"
+    },
+    {
+      "id": "1792469301806-2251",
+      "entity_type": "user",
+      "entity_id": 1792469275940,
+      "action": "update",
+      "title": "User \"Budi Test Kolom\" diperbarui",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:08:21.806Z"
+    },
+    {
+      "id": "1792469276498-45239",
+      "entity_type": "user",
+      "entity_id": 1792469275940,
+      "action": "update",
+      "title": "User \"Budi Test Kolom\" diperbarui",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:07:56.498Z"
+    },
+    {
+      "id": "1792469276191-49980",
+      "entity_type": "team",
+      "entity_id": 1792469276174,
+      "action": "create",
+      "title": "Tim \"Tim Uji Kolom\" dibuat",
+      "description": "Lomba: National Hackathon Ko+Lab 2026 • Anggota: 1",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:07:56.191Z"
+    },
+    {
+      "id": "1792469275977-34038",
+      "entity_type": "user",
+      "entity_id": 1792469275940,
+      "action": "create",
+      "title": "User \"Budi Test Kolom\" dibuat",
+      "description": "Role: mahasiswa • Email: budi.test@example.com",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T04:07:55.977Z"
+    },
+    {
+      "id": "1792468382658-47547",
+      "entity_type": "team",
+      "entity_id": 1792468382640,
+      "action": "delete",
+      "title": "Tim \"Tim Payload Uji\" dihapus",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T03:53:02.658Z"
+    },
+    {
+      "id": "1792468382643-23889",
+      "entity_type": "team",
+      "entity_id": 1792468382640,
+      "action": "create",
+      "title": "Tim \"Tim Payload Uji\" dibuat",
+      "description": "Lomba: Hackaton • Anggota: 2",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T03:53:02.643Z"
+    },
+    {
+      "id": "1792468254970-41143",
+      "entity_type": "team",
+      "entity_id": 1792468209941,
+      "action": "delete",
+      "title": "Tim \"Tim Uji Coba\" dihapus",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T03:50:54.970Z"
+    },
+    {
+      "id": "1792468209945-66936",
+      "entity_type": "team",
+      "entity_id": 1792468209941,
+      "action": "create",
+      "title": "Tim \"Tim Uji Coba\" dibuat",
+      "description": "Lomba: National Hackathon Ko+Lab 2026 • Anggota: 1",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T03:50:09.945Z"
+    },
+    {
+      "id": "1792468091248-93620",
+      "entity_type": "team",
+      "entity_id": 1792468091238,
+      "action": "create",
+      "title": "Tim \"euy\" dibuat",
+      "description": "Lomba: Hackaton • Anggota: 5",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T03:48:11.248Z"
+    },
+    {
+      "id": "1792467752745-39088",
+      "entity_type": "startup",
+      "entity_id": 1792467752715,
+      "action": "create",
+      "title": "Startup \"Kroombox\" dibuat",
+      "description": "Kode: KB",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T03:42:32.745Z"
+    },
+    {
+      "id": "1792462819700-64142",
+      "entity_type": "startup",
+      "entity_id": 1792462819636,
+      "action": "delete",
+      "title": "Startup \"SyncTest Startup\" dihapus",
+      "description": "",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T02:20:19.700Z"
+    },
+    {
+      "id": "1792462819639-73346",
+      "entity_type": "startup",
+      "entity_id": 1792462819636,
+      "action": "create",
+      "title": "Startup \"SyncTest Startup\" dibuat",
+      "description": "Kode: SYN",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-10-20T02:20:19.639Z"
     }
   ]
 }

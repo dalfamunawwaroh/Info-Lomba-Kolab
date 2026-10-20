@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../db/index.js';
+import { syncUser, logActivity } from '../db/sync.js';
 import { JWT_SECRET, JWT_REFRESH_SECRET, JWT_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN } from '../config/index.js';
 
 const generateTokens = (user) => {
@@ -104,6 +105,16 @@ export const register = (req, res) => {
 
     data.users.push(newUser);
     db.write(data);
+
+    syncUser(newUser);
+    logActivity({
+      entity_type: 'user',
+      entity_id: newUser.id,
+      action: 'register',
+      title: `Registrasi user "${newUser.name}"`,
+      description: `Role: ${newUser.role} • Email: ${newUser.email}`,
+      actor: newUser,
+    });
 
     const tokens = generateTokens(newUser);
     const { password: _, ...userWithoutPassword } = newUser;
