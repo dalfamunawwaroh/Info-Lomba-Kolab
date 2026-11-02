@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff, Mail, Lock, User, GraduationCap, Building2, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import startupService from '@/services/startupService';
-import { validateEmail, validatePassword, validateName } from '@/utils/validators';
+import authService from '@/services/authService';
+import { validateEmail, validatePassword, validateName, validateRequired } from '@/utils/validators';
 
 const DEFAULT_STARTUPS = [
   { id: 1, name: 'JagoAI' },
@@ -19,7 +20,7 @@ function RegisterForm() {
   const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    name: '', email: '', password: '', password_confirm: '', role: 'mahasiswa', startup_id: '',
+    name: '', email: '', password: '', password_confirm: '', role: 'mahasiswa', startup_id: '', nip_nim: '',
   });
   const [startups, setStartups] = useState(DEFAULT_STARTUPS);
   const [errors, setErrors] = useState({});
@@ -54,8 +55,12 @@ function RegisterForm() {
     length: form.password.length >= 8,
     upper: /[A-Z]/.test(form.password),
     number: /[0-9]/.test(form.password),
+    symbol: /[^A-Za-z0-9]/.test(form.password),
+    noSpace: form.password.length > 0 && !/\s/.test(form.password),
     match: form.password.length > 0 && form.password === form.password_confirm,
   };
+
+  const idLabel = form.role === 'mahasiswa' ? 'NIM' : 'NIP';
 
   const validateStep1 = () => {
     const errs = {};
@@ -63,6 +68,12 @@ function RegisterForm() {
     if (n) errs.name = n;
     const e = validateEmail(form.email);
     if (e) errs.email = e;
+    const idErr = validateRequired(form.nip_nim, idLabel);
+    if (idErr) errs.nip_nim = idErr;
+    else if (form.nip_nim.trim().length > 30) errs.nip_nim = `${idLabel} maksimal 30 karakter`;
+    else if (!/^[A-Za-z0-9.\-/]+$/.test(form.nip_nim.trim()))
+      errs.nip_nim = `${idLabel} hanya boleh berisi huruf, angka, titik, garis miring, dan tanda hubung`;
+    if (!form.startup_id) errs.startup_id = 'Startup wajib dipilih';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -72,13 +83,35 @@ function RegisterForm() {
     const p = validatePassword(form.password);
     if (p) errs.password = p;
     if (form.password !== form.password_confirm) errs.password_confirm = 'Password tidak cocok';
-    if (form.role === 'mahasiswa' && !form.startup_id) errs.startup_id = 'Mahasiswa wajib memilih startup';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const nextStep = () => {
-    if (validateStep1()) setStep(2);
+  const nextStep = async () => {
+    setApiError('');
+    // 1) Validasi lokal dulu: kolom kosong / format salah langsung tampil di step ini
+    if (!validateStep1()) return;
+    // 2) Cek ke server: email & NIM duplikat ketahuan di Data Diri, bukan saat submit
+    setLoading(true);
+    try {
+      const avail = await authService.checkAvailability({
+        email: String(form.email || '').trim(),
+        nip_nim: String(form.nip_nim || '').trim(),
+      });
+      const errs = {};
+      if (avail?.email_taken) errs.email = 'Email sudah terdaftar dalam sistem';
+      if (avail?.nim_taken) errs.nip_nim = `${idLabel} sudah terdaftar dalam sistem`;
+      if (Object.keys(errs).length > 0) {
+        setErrors((prev) => ({ ...prev, ...errs }));
+        return;
+      }
+      setStep(2);
+    } catch {
+      // Server tidak bisa dihubungi: tetap lanjut, submit akhir yang akan validasi
+      setStep(2);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -88,7 +121,7 @@ function RegisterForm() {
     setLoading(true);
     try {
       const data = { ...form };
-      if (form.role === 'dosen') delete data.startup_id;
+      data.nip_nim = String(form.nip_nim || '').trim();
       if (data.startup_id) data.startup_id = parseInt(data.startup_id);
       await register(data);
     } catch (err) {
@@ -205,7 +238,26 @@ function RegisterForm() {
               </div>
             </div>
 
-            {form.role === 'mahasiswa' && (
+            <div className="space-y-1 animate-fade-in">
+              <label className="text-xs font-bold text-slate-700 ml-0.5">{idLabel}</label>
+              <div className="relative group">
+                <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
+                <input
+                  type="text"
+                  placeholder={form.role === 'mahasiswa' ? 'Contoh: 2210512143' : 'Contoh: 198705122015031002'}
+                  value={form.nip_nim}
+                  onChange={(e) => setForm({ ...form, nip_nim: e.target.value })}
+                  maxLength={30}
+                  className={inputClass('nip_nim')}
+                />
+              </div>
+              {errors.nip_nim && <p className="text-xs text-red-500 animate-fade-in ml-0.5 font-medium">{errors.nip_nim}</p>}
+              <p className="text-[11px] text-slate-400 ml-0.5">
+                {form.role === 'mahasiswa' ? 'Nomor Induk Mahasiswa' : 'Nomor Induk Pegawai'} kamu — wajib diisi.
+              </p>
+            </div>
+
+            {(
               <div className="space-y-1 animate-fade-in relative z-20" ref={dropdownRef}>
                 <label className="text-xs font-bold text-slate-700 ml-0.5">Startup</label>
                 <div className="relative">
@@ -266,11 +318,21 @@ function RegisterForm() {
 
             <Button
               type="submit"
+              disabled={loading}
               className="w-full h-11 sm:h-11.5 mt-1.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25 active:scale-[0.98]"
             >
               <span className="flex items-center gap-2 justify-center">
-                Lanjutkan
-                <ArrowRight size={16} />
+                {loading ? (
+                  <>
+                    <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Mengecek...
+                  </>
+                ) : (
+                  <>
+                    Lanjutkan
+                    <ArrowRight size={16} />
+                  </>
+                )}
               </span>
             </Button>
           </div>
@@ -316,9 +378,11 @@ function RegisterForm() {
             <div className="bg-white/50 backdrop-blur-sm border border-slate-200/60 rounded-xl sm:rounded-2xl p-3 space-y-1.5">
               <p className="text-xs font-bold text-slate-700">Kekuatan Password</p>
               <div className="grid grid-cols-2 gap-1.5">
-                <PasswordCheck label="Min 8 karakter" ok={passwordChecks.length} />
-                <PasswordCheck label="1 huruf besar" ok={passwordChecks.upper} />
-                <PasswordCheck label="1 angka" ok={passwordChecks.number} />
+                <PasswordCheck label="Min. 8 karakter" ok={passwordChecks.length} />
+                <PasswordCheck label="Huruf kapital (A-Z)" ok={passwordChecks.upper} />
+                <PasswordCheck label="Angka (0-9)" ok={passwordChecks.number} />
+                <PasswordCheck label="Simbol khusus (!@#$)" ok={passwordChecks.symbol} />
+                <PasswordCheck label="Tanpa spasi" ok={passwordChecks.noSpace} />
                 <PasswordCheck label="Password cocok" ok={passwordChecks.match} />
               </div>
             </div>

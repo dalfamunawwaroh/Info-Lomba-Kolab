@@ -96,10 +96,17 @@ export const readActivityLog = async (limit = 100) => {
         'SELECT * FROM activities ORDER BY created_at DESC LIMIT ?',
         [limit]
       );
+      // entity_id kini VARCHAR (menampung ID numerik & string seperti "BC-004");
+      // konversi ke number hanya bila benar-benar numerik, agar string tidak jadi NaN.
+      const normId = (v) => {
+        if (v === null || v === undefined || v === '') return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : String(v);
+      };
       return rows.map((r) => ({
         id: r.id,
         entity_type: r.entity_type,
-        entity_id: r.entity_id !== null ? Number(r.entity_id) : null,
+        entity_id: normId(r.entity_id),
         action: r.action,
         title: r.title,
         description: r.description || '',
@@ -344,6 +351,73 @@ export const syncSubmission = async (sub) => {
   }
 };
 
+export const syncSoloRegistration = async (reg) => {
+  if (!isMySQLConnected() || !reg) return;
+  try {
+    const pool = getMySQLPool();
+    await pool.query(
+      `INSERT INTO solo_registrations
+         (id, competition_id, competition_title, user_id, user_name, user_email,
+          user_nim, status, notes, assigned_team_id, created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE
+         competition_id=VALUES(competition_id), competition_title=VALUES(competition_title),
+         user_id=VALUES(user_id), user_name=VALUES(user_name), user_email=VALUES(user_email),
+         user_nim=VALUES(user_nim), status=VALUES(status), notes=VALUES(notes),
+         assigned_team_id=VALUES(assigned_team_id), created_at=VALUES(created_at)`,
+      [
+        reg.id,
+        reg.competition_id,
+        reg.competition_title || null,
+        reg.user_id,
+        reg.user_name || null,
+        reg.user_email || null,
+        reg.user_nim || null,
+        reg.status || 'waiting',
+        reg.notes || null,
+        reg.assigned_team_id ?? null,
+        toJsDate(reg.created_at) || new Date(),
+      ]
+    );
+  } catch (e) {
+    console.warn('[Sync] syncSoloRegistration gagal:', e.message);
+  }
+};
+
+export const syncPasswordReset = async (r) => {
+  if (!isMySQLConnected() || !r) return;
+  try {
+    const pool = getMySQLPool();
+    await pool.query(
+      `INSERT INTO password_resets
+         (id, user_id, email, user_name, status, code_hash, attempts, max_attempts,
+          expires_at, sent_at, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE
+         user_id=VALUES(user_id), email=VALUES(email), user_name=VALUES(user_name),
+         status=VALUES(status), code_hash=VALUES(code_hash), attempts=VALUES(attempts),
+         max_attempts=VALUES(max_attempts), expires_at=VALUES(expires_at),
+         sent_at=VALUES(sent_at), updated_at=VALUES(updated_at)`,
+      [
+        r.id,
+        r.user_id,
+        r.email,
+        r.user_name || null,
+        r.status || 'pending',
+        r.code_hash || null,
+        r.attempts || 0,
+        r.max_attempts || 5,
+        toJsDate(r.expires_at),
+        toJsDate(r.sent_at),
+        toJsDate(r.created_at) || new Date(),
+        toJsDate(r.updated_at),
+      ]
+    );
+  } catch (e) {
+    console.warn('[Sync] syncPasswordReset gagal:', e.message);
+  }
+};
+
 export const syncBroadcast = async (b) => {
   if (!isMySQLConnected() || !b) return;
   try {
@@ -382,7 +456,7 @@ export const syncBroadcast = async (b) => {
 
 export const deleteRow = async (table, id) => {
   if (!isMySQLConnected()) return;
-  const allowed = ['users', 'startups', 'competitions', 'teams', 'submissions', 'activities', 'broadcasts'];
+  const allowed = ['users', 'startups', 'competitions', 'teams', 'submissions', 'activities', 'broadcasts', 'solo_registrations', 'password_resets'];
   if (!allowed.includes(table)) return;
   try {
     const pool = getMySQLPool();
@@ -405,7 +479,7 @@ export const reconcileMySQL = async () => {
   const data = db.read();
   try {
     await pool.query('SET FOREIGN_KEY_CHECKS=0');
-    for (const t of ['activities', 'submissions', 'teams', 'users', 'startups', 'competitions', 'broadcasts']) {
+    for (const t of ['activities', 'submissions', 'teams', 'users', 'startups', 'competitions', 'broadcasts', 'solo_registrations', 'password_resets']) {
       await pool.query(`DELETE FROM ${t}`);
     }
 
@@ -418,6 +492,10 @@ export const reconcileMySQL = async () => {
     for (const t of data.teams || []) await syncTeam(t);
 
     for (const s of data.submissions || []) await syncSubmission(s);
+
+    for (const r of data.solo_registrations || []) await syncSoloRegistration(r);
+
+    for (const r of data.password_resets || []) await syncPasswordReset(r);
 
     for (const b of data.broadcasts || []) await syncBroadcast(b);
 
@@ -443,14 +521,14 @@ export const reconcileMySQL = async () => {
     }
 
     const counts = {};
-    for (const t of ['users', 'startups', 'competitions', 'teams', 'submissions', 'broadcasts', 'activities']) {
+    for (const t of ['users', 'startups', 'competitions', 'teams', 'submissions', 'broadcasts', 'solo_registrations', 'password_resets', 'activities']) {
       const [[{ count }]] = await pool.query(`SELECT COUNT(*) as count FROM ${t}`);
       counts[t] = count;
     }
     console.log(
       `🔄 [Sync] MySQL direkonfiliasi dari data.json → ` +
       `${counts.users} users, ${counts.startups} startups, ${counts.competitions} lomba, ` +
-      `${counts.teams} tim, ${counts.submissions} pengajuan, ${counts.broadcasts} siaran, ${counts.activities} activities`
+      `${counts.teams} tim, ${counts.submissions} pengajuan, ${counts.solo_registrations} pendaftar solo, ${counts.broadcasts} siaran, ${counts.activities} activities`
     );
   } catch (e) {
     console.warn('[Sync] reconcileMySQL gagal:', e.message);

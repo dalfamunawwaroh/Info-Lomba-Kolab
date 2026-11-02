@@ -1,41 +1,43 @@
 import { useState, useEffect } from 'react';
 import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
 import { SkeletonCard } from '@/components/common/SkeletonLoader';
-import competitionService from '@/services/competitionService';
 import submissionService from '@/services/submissionService';
-import userService from '@/services/userService';
+import statsService from '@/services/statsService';
+import useUIStore from '@/store/uiStore';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
-  const [upcomingCompetitions, setUpcomingCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const addToast = useUIStore((s) => s.addToast);
 
   useEffect(() => {
+    let mounted = true;
     async function load() {
       try {
-        const [usersRes, compRes, subRes] = await Promise.allSettled([
-          userService.getUsers({ limit: 1 }),
-          competitionService.getCompetitions({ status: 'upcoming', limit: 5 }),
-          submissionService.getSubmissions({ status: 'pending', limit: 5 }),
+        const [statsRes, subRes] = await Promise.allSettled([
+          statsService.getAdminStats(),
+          submissionService.getSubmissions({ status: 'pending' }),
         ]);
 
-        setStats({
-          totalUsers: usersRes.status === 'fulfilled' ? usersRes.value.meta?.total || 0 : 0,
-          totalCompetitions: compRes.status === 'fulfilled' ? compRes.value.meta?.total || 0 : 0,
-          totalTeams: 0, // Will be populated when teams API is ready
-          pendingSubmissions: subRes.status === 'fulfilled' ? subRes.value.meta?.total || 0 : 0,
-        });
-        setUpcomingCompetitions(compRes.status === 'fulfilled' ? compRes.value.data || [] : []);
-        setPendingSubmissions(subRes.status === 'fulfilled' ? subRes.value.data || [] : []);
+        if (!mounted) return;
+        if (statsRes.status === 'fulfilled') {
+          setStats(statsRes.value.data || null);
+        } else {
+          addToast({ type: 'error', message: 'Gagal memuat statistik dashboard' });
+        }
+        setPendingSubmissions(
+          subRes.status === 'fulfilled' ? subRes.value.data || [] : []
+        );
       } catch (err) {
         console.error('Failed to load dashboard:', err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     load();
-  }, []);
+    return () => { mounted = false; };
+  }, [addToast]);
 
   if (loading) {
     return (
@@ -49,7 +51,6 @@ export default function AdminDashboardPage() {
     <AdminDashboard
       stats={stats}
       pendingSubmissions={pendingSubmissions}
-      upcomingCompetitions={upcomingCompetitions}
     />
   );
 }

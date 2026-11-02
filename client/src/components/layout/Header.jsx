@@ -5,11 +5,13 @@ import { useAuth } from '@/hooks/useAuth';
 import useUIStore from '@/store/uiStore';
 import { getInitials } from '@/utils/helpers';
 import notificationService from '@/services/notificationService';
+import { AdminProfileModal } from '@/components/admin/AdminProfileModal';
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { setSidebarOpen, theme, toggleTheme } = useUIStore();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const profilePath = `/${user?.role || 'admin'}/profile`;
   const settingsPath = `/${user?.role || 'admin'}/settings`;
@@ -77,6 +79,17 @@ export function Header() {
 
         <div className="h-10 w-[1px] bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
 
+        {isAdmin ? (
+          <button onClick={() => setProfileOpen(true)} className="flex items-center gap-4 cursor-pointer group" title="Profil & Keluar">
+            <div className="hidden md:flex flex-col items-end">
+              <p className="text-[14px] font-bold text-slate-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{user?.name || 'Admin'}</p>
+              <p className="text-[12px] font-semibold text-slate-500 dark:text-slate-400 capitalize mt-0.5">{user?.role || 'admin'}</p>
+            </div>
+            <div className="h-12 w-12 rounded-[16px] bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white text-[15px] font-bold shadow-lg shadow-purple-900/30 group-hover:scale-105 transition-transform duration-300 border border-purple-400/30">
+              {getInitials(user?.name || 'A')}
+            </div>
+          </button>
+        ) : (
         <Link to={profilePath} className="flex items-center gap-4 cursor-pointer group" title="Buka Profil Saya">
           <div className="hidden md:flex flex-col items-end">
             <p className="text-[14px] font-bold text-slate-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{user?.name || 'Guest User'}</p>
@@ -86,7 +99,9 @@ export function Header() {
             {getInitials(user?.name || 'G')}
           </div>
         </Link>
+        )}
       </div>
+      {isAdmin && <AdminProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />}
     </header>
   );
 }

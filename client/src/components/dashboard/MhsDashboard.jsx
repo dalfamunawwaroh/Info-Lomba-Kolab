@@ -57,9 +57,15 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1 group-hover:text-[#9333EA] dark:group-hover:text-purple-400 transition-colors">{item.competition?.name}</h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                    <span className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300">
-                      <UsersRound size={14} /> {item.team?.name}
-                    </span>
+                    {item.team ? (
+                      <span className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-700 dark:text-slate-300">
+                        <UsersRound size={14} /> {item.team.name}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/20 px-3 py-1 rounded-full text-amber-700 dark:text-amber-400">
+                        <UsersRound size={14} /> Menunggu tim
+                      </span>
+                    )}
                     {item.advisors?.[0] && <span className="text-slate-500 dark:text-slate-400">• Dosen: {item.advisors[0].name}</span>}
                   </div>
                 </div>

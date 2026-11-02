@@ -10,6 +10,44 @@ export const getBroadcasts = (req, res) => {
   }
 };
 
+const TARGET_LABELS = {
+  all: 'Semua Pengguna',
+  mahasiswa: 'Mahasiswa',
+  dosen: 'Dosen Pembimbing',
+  leader: 'Ketua Tim Lomba',
+};
+
+const countRecipients = (data, target) => {
+  if (target === 'all') return data.users.length;
+  if (target === 'mahasiswa' || target === 'dosen') {
+    return data.users.filter((u) => u.role === target && (u.status || 'active') === 'active').length;
+  }
+  if (target === 'leader') {
+    const leaders = new Set();
+    for (const t of data.teams) {
+      if (t.leader_id) leaders.add(t.leader_id);
+    }
+    return leaders.size;
+  }
+  return data.users.length;
+};
+
+const formatNow = () => {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const generateBroadcastId = (broadcasts) => {
+  let n = broadcasts.length + 1;
+  let id = `BC-${String(n).padStart(3, '0')}`;
+  while (broadcasts.some((b) => b.id === id)) {
+    n += 1;
+    id = `BC-${String(n).padStart(3, '0')}`;
+  }
+  return id;
+};
+
 export const createBroadcast = (req, res) => {
   try {
     const { title, target, category, priority, message, actionUrl, scheduleDate } = req.body;
@@ -17,21 +55,24 @@ export const createBroadcast = (req, res) => {
     if (!title || !message) {
       return res.status(400).json({ success: false, message: 'Judul dan isi pesan broadcast wajib diisi' });
     }
+    if (target && !TARGET_LABELS[target]) {
+      return res.status(400).json({ success: false, message: 'Target broadcast tidak dikenal' });
+    }
 
     const data = db.read();
-    const count = data.broadcasts.length + 1;
+    const targetCode = target || 'all';
     const newBroadcast = {
-      id: `BC-00${count}`,
+      id: generateBroadcastId(data.broadcasts),
       title,
-      target: target === 'all' ? 'Semua Pengguna' : target === 'mahasiswa' ? 'Mahasiswa' : 'Dosen Pembimbing',
-      targetCode: target || 'all',
+      target: TARGET_LABELS[targetCode],
+      targetCode,
       category: category || 'Pengumuman Lomba',
       priority: priority || 'normal',
       message,
       actionUrl: actionUrl || '',
       scheduleDate: scheduleDate || null,
-      sentAt: scheduleDate ? `${scheduleDate} (Scheduled)` : 'Baru saja',
-      recipientsCount: target === 'all' ? data.users.length : data.users.filter((u) => u.role === target).length || 50,
+      sentAt: scheduleDate ? `${scheduleDate} (Scheduled)` : formatNow(),
+      recipientsCount: countRecipients(data, targetCode),
       readCount: 0,
       status: scheduleDate ? 'Dijadualkan' : 'Terkirim',
       created_at: new Date().toISOString(),

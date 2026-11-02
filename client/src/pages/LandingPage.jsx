@@ -304,10 +304,10 @@ function Navbar() {
           <div className="hidden lg:flex items-center gap-1">
             {links.map(l => (
               <a key={l.id} href={`#${l.id}`}
-                className={`relative px-3.5 py-2 text-[13px] font-medium rounded-full transition-all duration-200 nav-link ${
+                className={`relative px-3.5 py-2 text-[13px] rounded-full transition-all duration-200 nav-link ${
                   activeSection === l.id
-                    ? 'text-brand-600 bg-brand-50 font-semibold'
-                    : scrolled ? 'text-gray-500 hover:text-brand-600 hover:bg-brand-50' : 'text-white/60 hover:text-white hover:bg-white/5'
+                    ? 'text-white bg-gradient-to-r from-[#6C1B75] to-[#9333EA] font-bold shadow-md shadow-purple-500/25'
+                    : scrolled ? 'text-gray-500 font-medium hover:text-brand-600 hover:bg-brand-50' : 'text-white/60 font-medium hover:text-white hover:bg-white/5'
                 }`}>
                 {l.label}
               </a>
@@ -335,10 +335,10 @@ function Navbar() {
           <div className={`px-4 pb-4 pt-2 ${scrolled ? 'glass rounded-b-[1.5rem]' : 'bg-gray-950/90 backdrop-blur-xl'}`}>
             {links.map(l => (
               <a key={l.id} href={`#${l.id}`} onClick={() => setMobileOpen(false)}
-                className={`block py-3 text-sm font-medium border-b transition-colors ${
+                className={`block py-3 px-3 text-sm rounded-xl transition-all ${
                   activeSection === l.id
-                    ? 'text-brand-600 bg-brand-50/50 font-semibold border-brand-100'
-                    : scrolled ? 'text-gray-700 border-gray-100 hover:text-brand-600' : 'text-white/70 border-white/5 hover:text-white'
+                    ? 'text-white bg-gradient-to-r from-[#6C1B75] to-[#9333EA] font-bold shadow-md shadow-purple-500/25 border-transparent'
+                    : scrolled ? 'text-gray-700 border-b border-gray-100 hover:text-brand-600 font-medium' : 'text-white/70 border-b border-white/5 hover:text-white font-medium'
                 }`}>
                 {l.label}
               </a>

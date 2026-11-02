@@ -3,23 +3,33 @@ import { Link } from 'react-router-dom';
 import { Trophy, UsersRound, Building2, ClipboardList, Activity, ArrowUpRight, CheckCircle, Clock, Megaphone, Send } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { STATUS_LABELS } from '@/utils/constants';
+import broadcastService from '@/services/broadcastService';
 
-function AdminDashboard({ stats, pendingSubmissions, upcomingCompetitions }) {
+function AdminDashboard({ stats, pendingSubmissions }) {
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastStatus, setBroadcastStatus] = useState('');
 
-  const handleBroadcast = (e) => {
+  const handleBroadcast = async (e) => {
     e.preventDefault();
     if (!broadcastTitle || !broadcastMessage) return;
     setBroadcastStatus('sending');
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await broadcastService.createBroadcast({
+        title: broadcastTitle,
+        message: broadcastMessage,
+        target: 'all',
+        category: 'Info Umum',
+        priority: 'normal',
+      });
       setBroadcastStatus('success');
       setBroadcastTitle('');
       setBroadcastMessage('');
       setTimeout(() => setBroadcastStatus(''), 3000);
-    }, 1000);
+    } catch (err) {
+      setBroadcastStatus('error');
+      setTimeout(() => setBroadcastStatus(''), 3000);
+    }
   };
 
   return (
@@ -58,11 +68,11 @@ function AdminDashboard({ stats, pendingSubmissions, upcomingCompetitions }) {
               <div key={sub.id} className="group flex items-center justify-between p-5 rounded-[20px] border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-800/80 hover:border-purple-500/30 transition-all duration-300 cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold border border-slate-300 dark:border-white/10">
-                    {sub.team?.name?.charAt(0) || 'T'}
+                    {sub.team_name?.charAt(0) || 'T'}
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{sub.team?.name}</h3>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{sub.competition?.name}</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{sub.team_name}</h3>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{sub.competition_title}</p>
                   </div>
                 </div>
                 <StatusBadge status={sub.status} labels={STATUS_LABELS} />
@@ -132,6 +142,8 @@ function AdminDashboard({ stats, pendingSubmissions, upcomingCompetitions }) {
                   <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"/> Mengirim...</span>
                 ) : broadcastStatus === 'success' ? (
                   <span className="flex items-center gap-2 text-emerald-600"><CheckCircle size={16}/> Terkirim</span>
+                ) : broadcastStatus === 'error' ? (
+                  <span className="flex items-center gap-2 text-rose-700">Gagal mengirim, coba lagi</span>
                 ) : (
                   <span className="flex items-center gap-2">Kirim Broadcast <Send size={16}/></span>
                 )}

@@ -7,7 +7,7 @@ import {
   deleteTeam,
   updateMembers,
 } from '../controllers/teamController.js';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -15,9 +15,10 @@ router.use(authenticateToken);
 
 router.get('/', getTeams);
 router.get('/:id', getTeamById);
-router.post('/', createTeam);
-router.patch('/:id', updateTeam);
-router.delete('/:id', deleteTeam);
-router.patch('/:id/members', updateMembers);
+// Hanya admin (Kelola Tim) yang boleh membuat/mengubah/menghapus tim.
+router.post('/', requireRole('admin'), createTeam);
+router.patch('/:id', requireRole('admin'), updateTeam);
+router.delete('/:id', requireRole('admin'), deleteTeam);
+router.patch('/:id/members', requireRole('admin'), updateMembers);
 
 export default router;

@@ -315,6 +315,10 @@ export default function ManageTimPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [regs, setRegs] = useState([]);
+  const [assignTarget, setAssignTarget] = useState(null);
+  const [assignTeamName, setAssignTeamName] = useState('');
+  const [assigning, setAssigning] = useState(false);
   const addToast = useUIStore((s) => s.addToast);
   const navigate = useNavigate();
 
@@ -323,10 +327,12 @@ export default function ManageTimPage() {
     Promise.all([
       competitionService.getCompetitions({ limit: 100 }).catch(() => ({ data: [] })),
       api.get('/teams').catch(() => ({ data: { data: [] } })),
+      api.get('/registrations', { params: { status: 'waiting' } }).catch(() => ({ data: { data: [] } })),
     ])
-      .then(([cRes, tRes]) => {
+      .then(([cRes, tRes, rRes]) => {
         setCompetitions(cRes.data || []);
         setTeams(tRes.data?.data || []);
+        setRegs(rRes.data?.data || []);
       })
       .catch(() => addToast({ type: 'error', message: 'Gagal memuat data tim' }))
       .finally(() => setLoading(false));
@@ -351,6 +357,28 @@ export default function ManageTimPage() {
       return matchComp && matchSearch;
     });
   }, [teams, selectedComp, search]);
+
+  const openAssign = (reg) => {
+    setAssignTarget(reg);
+    setAssignTeamName(`Tim ${(reg.user?.name || reg.user_name || 'Mahasiswa').split(' ')[0]}`);
+  };
+
+  const confirmAssign = async () => {
+    if (!assignTarget) return;
+    setAssigning(true);
+    try {
+      const res = await api.post(`/registrations/${assignTarget.id}/assign`, {
+        team_name: assignTeamName.trim(),
+      });
+      addToast({ type: 'success', message: res.data?.message || 'Tim berhasil dibuat' });
+      setAssignTarget(null);
+      loadData();
+    } catch (err) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Gagal membuat tim' });
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   if (loading) return <LoadingSpinner className="py-12" />;
 
@@ -386,6 +414,55 @@ export default function ManageTimPage() {
           ))}
         </Select>
       </div>
+
+      {/* Pendaftar tanpa tim — menunggu admin buatkan tim */}
+      {regs.length > 0 && (
+        <Card>
+          <CardContent>
+            <div className="mb-3">
+              <h2 className="font-semibold flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-amber-600" />
+                Pendaftar Tanpa Tim ({regs.length})
+              </h2>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Mahasiswa yang mendaftar lomba tanpa tim — buatkan tim agar bisa langsung berkompetisi
+              </p>
+            </div>
+            <div className="space-y-3">
+              {regs.map((reg) => (
+                <div
+                  key={reg.id}
+                  className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium">{reg.user?.name || reg.user_name}</p>
+                      {(reg.user?.nip_nim || reg.user_nim) && (
+                        <span className="text-xs text-muted-foreground">NIM {reg.user?.nip_nim || reg.user_nim}</span>
+                      )}
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                        <Trophy className="h-3 w-3" />
+                        {reg.competition?.title || reg.competition_title || 'Lomba'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Mendaftar{' '}
+                      {reg.created_at
+                        ? new Date(reg.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                        : '-'}
+                      {reg.user?.program_studi ? ` • ${reg.user.program_studi}` : ''}
+                    </p>
+                    {reg.notes && <p className="text-sm text-muted-foreground italic">"{reg.notes}"</p>}
+                  </div>
+                  <Button size="sm" onClick={() => openAssign(reg)}>
+                    <UserPlus className="h-4 w-4 mr-1" />Buatkan Tim
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Team list — always visible */}
       <Card>
@@ -439,6 +516,38 @@ export default function ManageTimPage() {
           )}
         </CardContent>
       </Card>
+
+      {assignTarget && (
+        <Modal isOpen onClose={() => setAssignTarget(null)} title="Buatkan Tim" className="max-w-md">
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Tim baru akan dibuat untuk{' '}
+              <span className="font-medium text-foreground">{assignTarget.user?.name || assignTarget.user_name}</span>{' '}
+              pada lomba{' '}
+              <span className="font-medium text-foreground">
+                {assignTarget.competition?.title || assignTarget.competition_title}
+              </span>
+              . Ia otomatis menjadi ketua tim.
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Nama Tim</label>
+              <Input
+                placeholder="Nama tim"
+                value={assignTeamName}
+                onChange={(e) => setAssignTeamName(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAssignTarget(null)} disabled={assigning}>
+                Batal
+              </Button>
+              <Button onClick={confirmAssign} disabled={assigning || !assignTeamName.trim()}>
+                {assigning ? 'Membuat...' : 'Buat Tim'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {showAddModal && (
         <AddTeamModal

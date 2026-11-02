@@ -17,6 +17,10 @@ import broadcastRoutes from './routes/broadcastRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import directoryRoutes from './routes/directoryRoutes.js';
+import historyRoutes from './routes/historyRoutes.js';
+import registrationRoutes from './routes/registrationRoutes.js';
+import resetRoutes from './routes/resetRoutes.js';
 
 const app = express();
 
@@ -55,6 +59,10 @@ app.use('/api/v1/broadcasts', broadcastRoutes);
 app.use('/api/v1/admin/stats', statsRoutes);
 app.use('/api/v1/activities', activityRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/directory', directoryRoutes);
+app.use('/api/v1/history', historyRoutes);
+app.use('/api/v1/registrations', registrationRoutes);
+app.use('/api/v1/admin/resets', resetRoutes);
 
 // 404 Handler
 app.use((req, res) => {

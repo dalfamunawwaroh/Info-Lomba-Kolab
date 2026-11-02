@@ -20,7 +20,14 @@ export const getTeamById = (req, res) => {
       return res.status(404).json({ success: false, message: 'Tim tidak ditemukan' });
     }
 
-    return res.json({ success: true, data: team });
+    const comp = data.competitions.find((c) => c.id === team.competition_id) || null;
+    return res.json({
+      success: true,
+      data: {
+        ...team,
+        competition: comp ? { ...comp, name: comp.title } : null,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

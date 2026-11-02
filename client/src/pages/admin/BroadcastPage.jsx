@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Megaphone, Send, Clock, Users, ShieldAlert, CheckCircle2, 
   Bell, Eye, Trash2, Copy, Filter, Sparkles, AlertTriangle, 
-  Info, ExternalLink, Calendar, Plus, RefreshCw, Radio
+  Info, ExternalLink, Calendar, Plus, RefreshCw, Radio, X
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
+import broadcastService from '@/services/broadcastService';
+import statsService from '@/services/statsService';
 
 export default function BroadcastPage() {
   const addToast = useUIStore((s) => s.addToast);
   const [formData, setFormData] = useState({
     title: '',
     target: 'all',
-    category: 'info',
+    category: 'Pengumuman Lomba',
     priority: 'normal',
     message: '',
     actionUrl: '',
@@ -20,56 +22,47 @@ export default function BroadcastPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'history'
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [detailBroadcast, setDetailBroadcast] = useState(null);
 
-  // Dummy statistics
+  /* ── Muat riwayat broadcast + statistik pengguna dari backend ── */
+  const loadBroadcasts = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await broadcastService.getBroadcasts();
+      setHistory(res.data || []);
+    } catch (err) {
+      addToast({ type: 'error', message: 'Gagal memuat riwayat broadcast' });
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBroadcasts();
+    statsService.getAdminStats()
+      .then((res) => setTotalUsers(res.data?.total_users || 0))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ── Statistik kartu — dihitung real dari data ── */
+  const totalSent = history.filter((b) => b.status === 'Terkirim').length;
+  const totalScheduled = history.filter((b) => b.status === 'Dijadualkan').length;
+  const totalRecipients = history.reduce((n, b) => n + (b.recipientsCount || 0), 0);
+  const totalRead = history.reduce((n, b) => n + (b.readCount || 0), 0);
+  const readRate = totalRecipients > 0 ? `${((totalRead / totalRecipients) * 100).toFixed(1)}%` : '—';
+
   const stats = [
-    { title: 'Total Terkirim', value: '38', change: '+12% bulan ini', icon: Send, color: 'from-[#9333EA] to-[#6C1B75]' },
-    { title: 'Estimasi Jangkauan', value: '1,420 User', change: 'Mahasiswa & Dosen', icon: Users, color: 'from-blue-500 to-indigo-600' },
-    { title: 'Tingkat Keterbacaan', value: '94.2%', change: 'Respon cepat', icon: Eye, color: 'from-emerald-500 to-teal-600' },
-    { title: 'Dijadualkan', value: '2 Pesan', change: 'Kirim otomatis', icon: Clock, color: 'from-amber-500 to-orange-600' },
+    { title: 'Total Terkirim', value: String(totalSent), change: 'pesan terkirim', icon: Send, color: 'from-[#9333EA] to-[#6C1B75]' },
+    { title: 'Estimasi Jangkauan', value: `${totalUsers} User`, change: 'Mahasiswa & Dosen aktif', icon: Users, color: 'from-blue-500 to-indigo-600' },
+    { title: 'Tingkat Keterbacaan', value: readRate, change: totalRead > 0 ? `${totalRead} kali dibaca` : 'Belum ada data baca', icon: Eye, color: 'from-emerald-500 to-teal-600' },
+    { title: 'Dijadualkan', value: `${totalScheduled} Pesan`, change: 'Kirim terjadwal', icon: Clock, color: 'from-amber-500 to-orange-600' },
   ];
 
-  // Dummy history
-  const [history, setHistory] = useState([
-    {
-      id: 'BC-001',
-      title: 'Pendaftaran Hackathon National 2026 Diperpanjang!',
-      target: 'Mahasiswa',
-      targetCode: 'mahasiswa',
-      category: 'Pengumuman Lomba',
-      priority: 'high',
-      sentAt: '2026-10-08 14:30',
-      recipientsCount: 890,
-      readCount: 765,
-      status: 'Terkirim',
-    },
-    {
-      id: 'BC-002',
-      title: 'Pemeliharaan Server Sistem Info Lomba',
-      target: 'Semua Pengguna',
-      targetCode: 'all',
-      category: 'System Maintenance',
-      priority: 'urgent',
-      sentAt: '2026-10-05 09:00',
-      recipientsCount: 1420,
-      readCount: 1380,
-      status: 'Terkirim',
-    },
-    {
-      id: 'BC-003',
-      title: 'Reminder Input Laporan Kemajuan Tim Bimbingan',
-      target: 'Dosen Pembimbing',
-      targetCode: 'dosen',
-      category: 'Info Umum',
-      priority: 'normal',
-      sentAt: '2026-10-12 08:00 (Scheduled)',
-      recipientsCount: 150,
-      readCount: 0,
-      status: 'Dijadualkan',
-    },
-  ]);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.message) {
       addToast({ type: 'error', message: 'Judul dan isi pesan broadcast wajib diisi!' });
@@ -77,36 +70,44 @@ export default function BroadcastPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const newBroadcast = {
-        id: `BC-00${history.length + 1}`,
+    try {
+      const res = await broadcastService.createBroadcast({
         title: formData.title,
-        target: formData.target === 'all' ? 'Semua Pengguna' : formData.target === 'mahasiswa' ? 'Mahasiswa' : 'Dosen Pembimbing',
-        targetCode: formData.target,
+        target: formData.target,
         category: formData.category,
         priority: formData.priority,
-        sentAt: formData.scheduleDate ? `${formData.scheduleDate} (Scheduled)` : 'Baru saja',
-        recipientsCount: formData.target === 'all' ? 1420 : 890,
-        readCount: 0,
-        status: formData.scheduleDate ? 'Dijadualkan' : 'Terkirim',
-      };
-
-      setHistory([newBroadcast, ...history]);
-      addToast({ 
-        type: 'success', 
-        message: formData.scheduleDate ? 'Broadcast berhasil dijadwalkan!' : 'Broadcast berhasil dikirimkan!' 
+        message: formData.message,
+        actionUrl: formData.actionUrl,
+        scheduleDate: formData.scheduleDate || null,
       });
+      addToast({ type: 'success', message: res.message || 'Broadcast berhasil dikirimkan!' });
       setFormData({
         title: '',
         target: 'all',
-        category: 'info',
+        category: 'Pengumuman Lomba',
         priority: 'normal',
         message: '',
         actionUrl: '',
         scheduleDate: '',
       });
-    }, 800);
+      loadBroadcasts();
+      setActiveTab('history');
+    } catch (err) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Gagal mengirim broadcast' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (item) => {
+    if (!window.confirm(`Hapus broadcast "${item.title}" dari riwayat?`)) return;
+    try {
+      const res = await broadcastService.deleteBroadcast(item.id);
+      addToast({ type: 'success', message: res.message || 'Broadcast berhasil dihapus' });
+      loadBroadcasts();
+    } catch (err) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Gagal menghapus broadcast' });
+    }
   };
 
   const getPriorityBadge = (priority) => {
@@ -410,7 +411,11 @@ export default function BroadcastPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                {history.map((item) => (
+                {loadingHistory ? (
+                  <tr><td colSpan={6} className="py-10 text-center text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2"><RefreshCw size={14} className="animate-spin" /> Memuat riwayat broadcast...</td></tr>
+                ) : history.length === 0 ? (
+                  <tr><td colSpan={6} className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">Belum ada broadcast. Buat pengumuman pertama di tab "Buat Broadcast".</td></tr>
+                ) : history.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
                     <td className="py-4 px-4">
                       <div className="font-bold text-slate-900 dark:text-white text-sm group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
@@ -446,17 +451,14 @@ export default function BroadcastPage() {
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                          onClick={() => addToast({ type: 'info', message: `Melihat detail broadcast ${item.id}` })}
+                          onClick={() => setDetailBroadcast(item)}
                           className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                           title="Lihat Detail"
                         >
                           <Eye size={15} />
                         </button>
                         <button 
-                          onClick={() => {
-                            setHistory(history.filter(h => h.id !== item.id));
-                            addToast({ type: 'success', message: 'Broadcast berhasil dihapus dari riwayat.' });
-                          }}
+                          onClick={() => handleDelete(item)}
                           className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition-colors"
                           title="Hapus Record"
                         >
@@ -468,6 +470,86 @@ export default function BroadcastPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Detail Broadcast ── */}
+      {detailBroadcast && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setDetailBroadcast(null)}
+        >
+          <div
+            className="w-full max-w-lg bg-white dark:bg-[#13161C] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
+              <div>
+                <p className="text-[11px] font-mono text-slate-400 mb-1">ID: {detailBroadcast.id} • {detailBroadcast.category}</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">{detailBroadcast.title}</h3>
+              </div>
+              <button
+                onClick={() => setDetailBroadcast(null)}
+                className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 transition-colors shrink-0"
+                title="Tutup"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`inline-block text-[11px] font-bold px-2.5 py-1 rounded-full ${detailBroadcast.status === 'Terkirim' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'}`}>
+                {detailBroadcast.status}
+              </span>
+              {getPriorityBadge(detailBroadcast.priority)}
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                <Users size={12} /> {detailBroadcast.target}
+              </span>
+            </div>
+
+            {/* Meta */}
+            <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5">
+                <p className="font-semibold text-slate-500 dark:text-slate-400 mb-0.5">Waktu Kirim</p>
+                <p className="font-mono text-slate-800 dark:text-slate-200">{detailBroadcast.sentAt}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5">
+                <p className="font-semibold text-slate-500 dark:text-slate-400 mb-0.5">Jangkauan Dibaca</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">{detailBroadcast.readCount} / {detailBroadcast.recipientsCount}</p>
+              </div>
+            </div>
+
+            {/* Isi pesan */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Isi Pesan</p>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-white/5 text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+                {detailBroadcast.message}
+              </div>
+            </div>
+
+            {/* Action URL */}
+            {detailBroadcast.actionUrl && (
+              <a
+                href={detailBroadcast.actionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                <ExternalLink size={13} /> Buka Tautan: {detailBroadcast.actionUrl}
+              </a>
+            )}
+
+            <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-white/10">
+              <button
+                onClick={() => setDetailBroadcast(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-white text-sm font-semibold transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

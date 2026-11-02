@@ -20,8 +20,10 @@ export function validateEmail(email) {
 export function validatePassword(password) {
   if (!password) return 'Password wajib diisi';
   if (password.length < 8) return 'Password minimal 8 karakter';
-  if (!/[A-Z]/.test(password)) return 'Password harus ada minimal 1 huruf besar';
-  if (!/[0-9]/.test(password)) return 'Password harus ada minimal 1 angka';
+  if (/\s/.test(password)) return 'Password tidak boleh mengandung spasi';
+  if (!/[A-Z]/.test(password)) return 'Password harus ada minimal 1 huruf kapital (A-Z)';
+  if (!/[0-9]/.test(password)) return 'Password harus ada minimal 1 angka (0-9)';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password harus ada minimal 1 simbol khusus (contoh: !@#$)';
   return null;
 }
 

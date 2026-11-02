@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit, UserCheck, UserX, Search, GraduationCap, ShieldCheck, BookOpen, IdCard, Hash, KeyRound, Send, Mail, MapPin, CalendarDays, AtSign, Link, Image as ImageIcon, PenLine } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Edit, Eye, UserCheck, UserX, Search, Trophy, GraduationCap, ShieldCheck, BookOpen, IdCard, Hash, KeyRound, Send, Mail, MapPin, CalendarDays, AtSign, Link as LinkIcon, Image as ImageIcon, PenLine } from 'lucide-react';
 import userService from '@/services/userService';
 import startupService from '@/services/startupService';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
@@ -16,6 +17,9 @@ import { formatDate } from '@/utils/helpers';
 import useUIStore from '@/store/uiStore';
 
 export default function ManageUsersPage() {
+  const navigate = useNavigate();
+  const [hoverUser, setHoverUser] = useState(null);
+  const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
   const [users, setUsers] = useState([]);
   const [startups, setStartups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -255,8 +259,27 @@ export default function ManageUsersPage() {
                   </thead>
                   <tbody>
                     {users.map((u) => (
-                      <tr key={u.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-2 font-medium">{u.name}</td>
+                      <tr
+                        key={u.id}
+                        className="border-b hover:bg-muted/50 cursor-pointer"
+                        onClick={() => navigate(`/admin/users/${u.id}`)}
+                        title="Lihat Detail"
+                        onMouseMove={(e) => {
+                          const TOOLTIP_W = 256, TOOLTIP_H = 220, GAP = 16;
+                          setHoverUser(u);
+                          let x = e.clientX + GAP;
+                          if (x + TOOLTIP_W > window.innerWidth - 8) x = e.clientX - TOOLTIP_W - GAP;
+                          let below = true, y = e.clientY + GAP;
+                          if (y + TOOLTIP_H > window.innerHeight - 8) { y = e.clientY - TOOLTIP_H - GAP; below = false; }
+                          setHoverPos({ x: Math.max(8, x), y: Math.max(8, y), below });
+                        }}
+                        onMouseLeave={() => setHoverUser(null)}
+                      >
+                        <td className="py-3 px-2 font-medium">
+                          <span className="border-b border-dotted border-slate-300 transition-colors">
+                            {u.name}
+                          </span>
+                        </td>
                         <td className="py-3 px-2 text-muted-foreground">{u.email}</td>
                         <td className="py-3 px-2">
                           <Badge variant={u.role === 'admin' ? 'destructive' : u.role === 'dosen' ? 'info' : 'secondary'}>
@@ -271,7 +294,12 @@ export default function ManageUsersPage() {
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">{formatDate(u.created_at, 'dd/MM/yy')}</td>
                         <td className="py-3 px-2">
-                          <div className="flex justify-end gap-1">
+                          <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Link to={`/admin/users/${u.id}`} title="Lihat Detail">
+                              <Button size="icon" variant="ghost">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
                             <Button size="icon" variant="ghost" onClick={() => openEditModal(u)} title="Edit">
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -466,7 +494,7 @@ export default function ManageUsersPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Link size={14} className="text-sky-600" /> LinkedIn
+                <LinkIcon size={14} className="text-sky-600" /> LinkedIn
               </label>
               <Input
                 placeholder="username atau https://linkedin.com/in/..."
@@ -744,6 +772,32 @@ export default function ManageUsersPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hover ringkas — ikut cursor, flip atas/bawah bila mepet tepi */}
+      {hoverUser && (
+        <div
+          className="fixed z-[100] w-64 pointer-events-none animate-fade-in"
+          style={{ left: hoverPos.x, top: hoverPos.y }}
+        >
+          <div className={`absolute left-6 w-3 h-3 rotate-45 bg-white dark:bg-[#15181e] border-slate-200 dark:border-white/10 ${hoverPos.below === false ? '-bottom-1.5 border-b border-r' : '-top-1.5 border-t border-l'}`} />
+          <div className="rounded-2xl bg-white dark:bg-[#15181e] shadow-2xl border border-slate-200 dark:border-white/10 p-4 text-left">
+            <p className="text-xs font-extrabold text-slate-900 dark:text-white truncate">{hoverUser.name}</p>
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">{hoverUser.email}</p>
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-purple-100 dark:bg-purple-500/15 text-[#6C1B75] dark:text-purple-300 text-[11px] font-bold px-2.5 py-1">
+              <Trophy size={12} />
+              {hoverUser.competition_stats ? `${hoverUser.competition_stats.active} aktif • ${hoverUser.competition_stats.total} total lomba` : 'Memuat statistik...'}
+            </p>
+            {Array.isArray(hoverUser.competition_names) && hoverUser.competition_names.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {hoverUser.competition_names.map((n, i) => (
+                  <p key={i} className="text-[11px] font-medium text-slate-600 dark:text-slate-300 truncate">• {n}</p>
+                ))}
+              </div>
+            )}
+            <p className="mt-2 text-[11px] font-bold text-[#9333EA]">Klik untuk detail →</p>
           </div>
         </div>
       )}

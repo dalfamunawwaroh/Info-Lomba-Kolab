@@ -19,6 +19,7 @@ import ManageTimPage from '@/pages/admin/ManageTimPage';
 import DetailTimAdminPage from '@/pages/admin/DetailTimAdminPage';
 import PengajuanPage from '@/pages/admin/PengajuanPage';
 import BroadcastPage from '@/pages/admin/BroadcastPage';
+import DetailUserAdminPage from '@/pages/admin/DetailUserAdminPage';
 import StudentActivityPage from '@/pages/admin/StudentActivityPage';
 
 // Dosen Pages
@@ -115,6 +116,7 @@ function AppRoutes() {
       >
         <Route index element={<AdminDashboardPage />} />
         <Route path="users" element={<ManageUsersPage />} />
+        <Route path="users/:id" element={<DetailUserAdminPage />} />
         <Route path="startups" element={<ManageStartupsPage />} />
         <Route path="competitions" element={<ManageLombaPage />} />
         <Route path="competitions/add" element={<TambahLombaPage />} />
@@ -125,7 +127,7 @@ function AppRoutes() {
         <Route path="activities" element={<StudentActivityPage />} />
         <Route path="submissions" element={<PengajuanPage />} />
         <Route path="broadcast" element={<BroadcastPage />} />
-        <Route path="directory" element={<DirektoriPage />} />
+        <Route path="directory" element={<Navigate to="/admin/users" replace />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/:id" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />

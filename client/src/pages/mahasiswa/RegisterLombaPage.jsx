@@ -56,8 +56,8 @@ export default function RegisterLombaPage() {
     if (hasTeam) {
       if (!teamName.trim()) errs.teamName = 'Nama tim wajib diisi';
       if (members.length < 1) errs.members = 'Minimal 1 anggota selain ketua';
-      if (members.length + 1 > (competition?.max_team_size || 10)) {
-        errs.members = `Maksimal ${competition.max_team_size} anggota termasuk ketua`;
+      if (members.length + 1 > (competition?.max_team_members || 10)) {
+        errs.members = `Maksimal ${competition.max_team_members} anggota termasuk ketua`;
       }
     }
     setErrors(errs);
@@ -88,7 +88,7 @@ export default function RegisterLombaPage() {
         <ArrowLeft className="h-4 w-4 mr-1" />Kembali
       </Button>
 
-      <h1 className="text-2xl font-bold">Daftar: {competition.name}</h1>
+      <h1 className="text-2xl font-bold">Daftar: {competition.title}</h1>
 
       {hasTeam === null ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -121,7 +121,7 @@ export default function RegisterLombaPage() {
               <p className="text-sm text-muted-foreground bg-muted p-2 rounded">Kamu otomatis menjadi ketua tim</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tambah Anggota (max {competition.max_team_size - 1} lagi)</label>
+              <label className="text-sm font-medium">Tambah Anggota (max {(competition.max_team_members || 10) - 1} lagi)</label>
               <div className="flex gap-2">
                 <Select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)} className="flex-1">
                   <option value="">-- Pilih Anggota --</option>

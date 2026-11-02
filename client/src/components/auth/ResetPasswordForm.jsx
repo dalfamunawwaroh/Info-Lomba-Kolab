@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Lock, Eye, EyeOff, CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2, ArrowRight, ShieldCheck, Mail, KeyRound, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/common/Button';
-import { validatePassword } from '@/utils/validators';
+import { validateEmail, validatePassword } from '@/utils/validators';
+import authService from '@/services/authService';
 
 function ResetPasswordForm() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
-  const [form, setForm] = useState({ password: '', password_confirm: '' });
+  const [form, setForm] = useState({
+    email: searchParams.get('email') || '',
+    code: '',
+    password: '',
+    password_confirm: '',
+  });
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -20,20 +26,39 @@ function ResetPasswordForm() {
     match: form.password.length > 0 && form.password === form.password_confirm,
   };
 
+  const setField = (name, value) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (serverError) setServerError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = {};
+    const emailErr = validateEmail(form.email);
+    if (emailErr) errs.email = emailErr;
+    if (!form.code.trim()) errs.code = 'Kode verifikasi wajib diisi';
+    else if (!/^\d{6}$/.test(form.code.trim())) errs.code = 'Kode verifikasi terdiri dari 6 angka';
     const p = validatePassword(form.password);
     if (p) errs.password = p;
     if (form.password !== form.password_confirm) errs.password_confirm = 'Password tidak cocok';
     setErrors(errs);
+    setServerError('');
     if (Object.keys(errs).length > 0) return;
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await authService.resetPassword({
+        email: form.email.trim(),
+        code: form.code.trim(),
+        password: form.password,
+      });
       setSuccess(true);
+    } catch (err) {
+      setServerError(err.response?.data?.message || 'Verifikasi gagal. Coba lagi.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   if (success) {
@@ -44,13 +69,14 @@ function ResetPasswordForm() {
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">Password Berhasil Diubah!</h2>
         <p className="text-xs sm:text-sm text-slate-600 mb-6 leading-relaxed">
-          Password kamu sudah diperbarui. Silakan login dengan password baru.
+          Password akun <span className="font-semibold text-slate-900">{form.email}</span> sudah diperbarui.
+          Silakan login dengan password baru.
         </p>
         <Link to="/login">
           <Button className="w-full h-12 sm:h-13 rounded-xl sm:rounded-2xl font-bold text-sm bg-gradient-to-r from-[#6C1B75] to-[#9333EA] hover:from-[#5a1663] hover:to-[#7C2D8C] transition-all duration-300 hover:shadow-xl hover:shadow-[#6C1B75]/25">
-            <span className="flex items-center gap-2 justify-center">
+            <span className="flex items-center justify-center">
               Login Sekarang
-              <ArrowRight size={16} />
+              <ArrowRight size={16} className="ml-2" />
             </span>
           </Button>
         </Link>
@@ -62,15 +88,62 @@ function ResetPasswordForm() {
     <div className="w-full">
       <div className="mb-5 text-center">
         <div className="inline-flex items-center gap-1.5 bg-[#6C1B75]/10 text-[#6C1B75] text-[11px] sm:text-xs font-semibold px-3 py-1 rounded-full mb-3">
-          <ShieldCheck size={13} /> Reset Password
+          <ShieldCheck size={13} /> Verifikasi & Reset
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Password Baru</h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Masukkan Kode Verifikasi</h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
-          Masukkan password baru untuk akun kamu.
+          Masukkan kode 6 digit yang dikirim ke emailmu oleh admin, lalu buat password baru.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        {serverError && (
+          <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm rounded-xl p-3.5 animate-fade-in">
+            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+            <span className="font-medium">{serverError}</span>
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <label className="text-xs sm:text-sm font-bold text-slate-700 ml-1">Email Terdaftar</label>
+          <div className="relative group">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
+            <input
+              type="email"
+              placeholder="nama@email.com"
+              value={form.email}
+              onChange={(e) => setField('email', e.target.value)}
+              className={`w-full h-12 sm:h-13 pl-11 pr-4 rounded-xl sm:rounded-2xl border text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${
+                errors.email ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'
+              }`}
+            />
+          </div>
+          {errors.email && <p className="text-xs text-red-500 animate-fade-in ml-1 font-medium">{errors.email}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs sm:text-sm font-bold text-slate-700 ml-1">Kode Verifikasi (6 Digit)</label>
+          <div className="relative group">
+            <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="Contoh: 483920"
+              value={form.code}
+              onChange={(e) => setField('code', e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className={`w-full h-12 sm:h-13 pl-11 pr-4 rounded-xl sm:rounded-2xl border text-sm font-bold text-center tracking-[0.5em] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${
+                errors.code ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'
+              }`}
+              autoFocus
+            />
+          </div>
+          {errors.code && <p className="text-xs text-red-500 animate-fade-in ml-1 font-medium">{errors.code}</p>}
+          <p className="text-[11px] text-slate-400 ml-1">
+            Kode hanya berlaku 10 menit setelah dikirim dan bisa digunakan 5 kali percobaan.
+          </p>
+        </div>
+
         <div className="space-y-1.5">
           <label className="text-xs sm:text-sm font-bold text-slate-700 ml-1">Password Baru</label>
           <div className="relative group">
@@ -79,9 +152,8 @@ function ResetPasswordForm() {
               type={showPassword ? 'text' : 'password'}
               placeholder="Password baru"
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => setField('password', e.target.value)}
               className={`w-full h-12 sm:h-13 pl-11 pr-11 rounded-xl sm:rounded-2xl border text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${errors.password ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'}`}
-              autoFocus
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#6C1B75] transition-colors p-1 rounded-md hover:bg-slate-100">
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -95,9 +167,10 @@ function ResetPasswordForm() {
           <div className="relative group">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-focus-within:text-[#6C1B75] transition-colors" />
             <input
-              type="password" placeholder="Ulangi password baru"
+              type="password"
+              placeholder="Ulangi password baru"
               value={form.password_confirm}
-              onChange={(e) => setForm({ ...form, password_confirm: e.target.value })}
+              onChange={(e) => setField('password_confirm', e.target.value)}
               className={`w-full h-12 sm:h-13 pl-11 pr-4 rounded-xl sm:rounded-2xl border text-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#6C1B75]/10 focus:border-[#6C1B75] focus:bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] ${errors.password_confirm ? 'border-red-300 bg-red-50 text-red-900' : 'border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-800'}`}
             />
           </div>
@@ -122,16 +195,30 @@ function ResetPasswordForm() {
           {loading ? (
             <span className="flex items-center gap-2 justify-center">
               <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Menyimpan...
+              Memverifikasi...
             </span>
           ) : (
-            <span className="flex items-center gap-2 justify-center">
-              Simpan Password Baru
-              <ArrowRight size={16} />
+            <span className="flex items-center justify-center">
+              Verifikasi & Simpan Password
+              <ArrowRight size={16} className="ml-2" />
             </span>
           )}
         </Button>
       </form>
+
+      <div className="relative my-5 sm:my-6">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200/60" /></div>
+      </div>
+
+      <div className="text-center space-y-2">
+        <Link to="/forgot-password" className="block text-xs sm:text-sm text-slate-500 hover:text-[#6C1B75] font-bold transition-colors">
+          Belum punya kode? Ajukan permintaan ulang
+        </Link>
+        <Link to="/login" className="block text-xs sm:text-sm text-slate-500 hover:text-[#6C1B75] inline-flex items-center gap-1.5 font-bold transition-colors">
+          <ArrowRight size={14} className="rotate-180" />
+          Kembali ke Login
+        </Link>
+      </div>
     </div>
   );
 }

@@ -17,26 +17,6 @@ export function AuthProvider({ children }) {
     if (storedUser && storage.getAccessToken()) {
       setUser(storedUser);
     }
-    // Dev bypass: ?dev_login=admin|dosen|mahasiswa
-    const params = new URLSearchParams(window.location.search);
-    const devRole = params.get('dev_login');
-    if (devRole && ['admin', 'dosen', 'mahasiswa'].includes(devRole)) {
-      const dummyUser = {
-        id: 1,
-        name: devRole === 'admin' ? 'Admin Ko+Lab' : devRole === 'dosen' ? 'Dr. Budi Santoso' : 'Rina Wijaya',
-        email: `${devRole}@kolab.id`,
-        role: devRole,
-        startup_id: 1,
-        startup_name: 'Teknologi Informasi',
-        avatar: null,
-        created_at: '2026-01-15',
-      };
-      storage.setTokens('dev-token-access', 'dev-token-refresh');
-      storage.setUser(dummyUser);
-      setUser(dummyUser);
-      // Clean URL
-      window.history.replaceState({}, '', window.location.pathname);
-    }
     setLoading(false);
   }, []);
 

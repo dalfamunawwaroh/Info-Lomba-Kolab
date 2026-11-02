@@ -161,10 +161,28 @@ export const initMySQL = async () => {
     `);
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS solo_registrations (
+        id BIGINT PRIMARY KEY,
+        competition_id BIGINT NOT NULL,
+        competition_title VARCHAR(255),
+        user_id BIGINT NOT NULL,
+        user_name VARCHAR(150),
+        user_email VARCHAR(150),
+        user_nim VARCHAR(50),
+        status VARCHAR(30) DEFAULT 'waiting',
+        notes TEXT,
+        assigned_team_id BIGINT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_solo_comp (competition_id),
+        INDEX idx_solo_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS activities (
         id VARCHAR(50) PRIMARY KEY,
         entity_type VARCHAR(30) NOT NULL,
-        entity_id BIGINT NULL,
+        entity_id VARCHAR(50) NULL,
         action VARCHAR(50) NOT NULL,
         title VARCHAR(255) NOT NULL,
         description TEXT,
@@ -175,6 +193,25 @@ export const initMySQL = async () => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_activities_entity (entity_type, entity_id),
         INDEX idx_activities_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id BIGINT PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        email VARCHAR(150) NOT NULL,
+        user_name VARCHAR(150),
+        status VARCHAR(30) DEFAULT 'pending',
+        code_hash VARCHAR(255),
+        attempts INT DEFAULT 0,
+        max_attempts INT DEFAULT 5,
+        expires_at DATETIME NULL,
+        sent_at DATETIME NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NULL,
+        INDEX idx_pr_email (email),
+        INDEX idx_pr_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
@@ -224,6 +261,20 @@ export const initMySQL = async () => {
           console.warn(`⚠️ [MySQL] Migration skipped: ${e.message}`);
         }
       }
+    }
+
+    // activities.entity_id harus menampung ID string (mis. broadcast "BC-004") sekaligus ID numerik.
+    try {
+      const [actCol] = await pool.query(
+        `SELECT DATA_TYPE FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'activities' AND COLUMN_NAME = 'entity_id'`
+      );
+      if (actCol[0] && actCol[0].DATA_TYPE !== 'varchar') {
+        await pool.query('ALTER TABLE activities MODIFY COLUMN entity_id VARCHAR(50) NULL');
+        console.log('✅ [MySQL] activities.entity_id dimigrasi BIGINT → VARCHAR(50)');
+      }
+    } catch (e) {
+      console.warn(`⚠️ [MySQL] Migration activities.entity_id gagal: ${e.message}`);
     }
 
     // 4. Seed initial data if tables are empty

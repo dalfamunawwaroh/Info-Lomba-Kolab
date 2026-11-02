@@ -35,9 +35,31 @@ export const getUsers = (req, res) => {
     const startIndex = (pageNum - 1) * limitNum;
     const paginatedUsers = users.slice(startIndex, startIndex + limitNum);
 
+    // Statistik lomba per user (dipakai hover ringkas + halaman detail)
+    const activeCompIds = new Set(
+      (data.competitions || [])
+        .filter((c) => c.status === 'upcoming' || c.status === 'ongoing')
+        .map((c) => c.id)
+    );
+    const withStats = paginatedUsers.map((u) => {
+      const compIds = new Set();
+      const compNames = [];
+      for (const t of data.teams || []) {
+        const isMember = (t.members || []).some((m) => m.user_id === u.id);
+        if (!isMember && t.advisor_id !== u.id && t.leader_id !== u.id) continue;
+        if (!t.competition_id || compIds.has(t.competition_id)) continue;
+        compIds.add(t.competition_id);
+        const comp = (data.competitions || []).find((c) => c.id === t.competition_id);
+        if (comp) compNames.push(comp.title || comp.name);
+      }
+      let active = 0;
+      compIds.forEach((id) => { if (activeCompIds.has(id)) active += 1; });
+      return { ...u, competition_stats: { active, total: compIds.size }, competition_names: compNames.slice(0, 3) };
+    });
+
     return res.json({
       success: true,
-      data: paginatedUsers,
+      data: withStats,
       meta: {
         total,
         page: pageNum,
@@ -148,8 +170,29 @@ export const updateUser = (req, res) => {
       return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
     }
 
+    // Hanya admin yang boleh mengubah user lain; user biasa hanya dirinya sendiri.
+    const isAdmin = req.user.role === 'admin';
+    if (!isAdmin && req.user.id !== Number(id)) {
+      return res
+        .status(403)
+        .json({ success: false, message: 'Akses dilarang: Anda hanya dapat mengubah data Anda sendiri' });
+    }
+
     const existingUser = data.users[index];
-    const updateData = { ...req.body };
+    let updateData = { ...req.body };
+
+    // Non-admin (edit profil sendiri) hanya boleh menyentuh field profil aman —
+    // role, status, startup_id, password, dll tidak boleh diubah sendiri.
+    if (!isAdmin) {
+      const SELF_ALLOWED_FIELDS = [
+        'name', 'email', 'phone', 'address', 'bio', 'position', 'program_studi',
+        'tempat_lahir', 'tanggal_lahir', 'instagram', 'linkedin',
+        'foto_pribadi', 'tanda_tangan',
+      ];
+      updateData = Object.fromEntries(
+        Object.entries(updateData).filter(([key]) => SELF_ALLOWED_FIELDS.includes(key))
+      );
+    }
 
     if (updateData.password) {
       updateData.password = bcrypt.hashSync(updateData.password, 10);

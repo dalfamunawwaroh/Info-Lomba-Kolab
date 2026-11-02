@@ -40,9 +40,13 @@ export default function HistoryPage() {
                 <p className="font-medium">{item.competition?.name}</p>
                 <StatusBadge status={item.competition?.status} labels={STATUS_LABELS} />
               </div>
-              {item.team && (
+              {item.team ? (
                 <div className="text-sm text-muted-foreground">
-                  <p>Tim: {item.team.name} ({item.team.role_in_team === 'leader' ? 'Ketua' : 'Anggota'})</p>
+                  <p>Tim: {item.team.name} ({item.team.role_in_team === 'leader' ? 'Ketua' : item.team.role_in_team === 'advisor' ? 'Dosen Pembimbing' : 'Anggota'})</p>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  <p>Belum ada tim — menunggu penyesuaian admin</p>
                 </div>
               )}
               {item.advisors?.length > 0 && (

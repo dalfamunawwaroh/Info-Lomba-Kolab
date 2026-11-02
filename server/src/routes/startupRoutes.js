@@ -4,8 +4,10 @@ import { authenticateToken, requireRole } from '../middleware/authMiddleware.js'
 
 const router = Router();
 
-router.use(authenticateToken);
+// GET publik: dibutuhkan form register (dropdown startup) tanpa login
 router.get('/', getStartups);
+
+router.use(authenticateToken);
 router.post('/', requireRole('admin'), createStartup);
 router.patch('/:id', requireRole('admin'), updateStartup);
 router.delete('/:id', requireRole('admin'), deleteStartup);

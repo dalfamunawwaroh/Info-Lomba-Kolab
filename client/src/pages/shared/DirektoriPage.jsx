@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ROLE_LABELS } from '@/utils/constants';
 import { getInitials } from '@/utils/helpers';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DirektoriPage() {
   const [directory, setDirectory] = useState([]);
@@ -23,6 +24,7 @@ export default function DirektoriPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [startupFilter, setStartupFilter] = useState('');
   const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,7 +79,7 @@ export default function DirektoriPage() {
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {directory.map((person) => (
-              <Card key={person.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/profile/${person.id}`)}>
+              <Card key={person.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(isAdmin ? `/admin/users/${person.id}` : `/${user?.role || 'mahasiswa'}/profile/${person.id}`)}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">

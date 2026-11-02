@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Calendar, Clock, Users, ExternalLink, ArrowLeft, MapPin, Trophy,
   DollarSign, BookOpen, Link as LinkIcon, Pencil, UserCheck, Building2, Target
@@ -229,7 +229,13 @@ export default function DetailLombaPage() {
           {competition.teams?.length > 0 ? (
             <div className="space-y-3">
               {competition.teams.map((team) => (
-                <div key={team.id} className="p-4 rounded-lg border">
+                <Link
+                  key={team.id}
+                  to={isAdmin ? `${basePath}/teams/${team.id}` : '#'}
+                  onClick={(e) => { if (!isAdmin) e.preventDefault(); }}
+                  className={`block p-4 rounded-lg border transition-all ${isAdmin ? 'cursor-pointer hover:shadow-md hover:border-purple-200' : 'cursor-default'}`}
+                  title={isAdmin ? 'Lihat detail tim' : undefined}
+                >
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium">{team.name}</p>
                     <StatusBadge
@@ -261,7 +267,7 @@ export default function DetailLombaPage() {
                       )}
                     </p>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

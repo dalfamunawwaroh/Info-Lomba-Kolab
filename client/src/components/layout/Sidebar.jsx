@@ -8,15 +8,17 @@ import useUIStore from '@/store/uiStore';
 import { getInitials } from '@/utils/helpers';
 
 const adminMenu = [
+  { section: 'Utama' },
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/activities', icon: Activity, label: 'Kegiatan Mhs & Dosen' },
+  { section: 'Kelola Data' },
   { to: '/admin/users', icon: Users, label: 'Kelola User' },
   { to: '/admin/startups', icon: Building2, label: 'Kelola Startup' },
   { to: '/admin/competitions', icon: Trophy, label: 'Kelola Lomba' },
   { to: '/admin/teams', icon: UsersRound, label: 'Kelola Tim' },
+  { section: 'Operasional' },
   { to: '/admin/submissions', icon: ClipboardList, label: 'Pengajuan' },
   { to: '/admin/broadcast', icon: Megaphone, label: 'Broadcast' },
-  { to: '/admin/directory', icon: Users, label: 'Direktori' },
 ];
 
 const dosenMenu = [
@@ -68,13 +70,21 @@ function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-8 px-4 custom-scrollbar">
           <ul className="space-y-1.5">
-            {menuItems.map((item) => (
+            {menuItems.map((item, idx) => {
+              if (item.section) {
+                return (
+                  <li key={`section-${idx}`} className={`pt-4 first:pt-0 pb-1 px-4 ${!sidebarOpen && 'lg:hidden'}`}>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">{item.section}</p>
+                  </li>
+                );
+              }
+              return (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
                   end={item.end}
                   onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                  className={({ isActive }) => `flex items-center gap-4 px-4 py-3.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 group ${isActive ? 'bg-[#9333EA]/10 text-purple-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                  className={({ isActive }) => `flex items-center gap-4 px-4 py-3.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 group relative ${isActive ? 'bg-[#9333EA]/10 text-purple-600 dark:text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5'}`}
                 >
                   {({ isActive }) => (
                     <>
@@ -85,11 +95,20 @@ function Sidebar() {
                   )}
                 </NavLink>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </nav>
 
-        {/* Footer / User Profile */}
+        {/* Footer / User Profile — disembunyikan untuk admin (profil & logout pindah ke modal header) */}
+        {isAdmin ? (
+          <div className="p-4 border-t border-slate-200 dark:border-white/5 shrink-0">
+            <button onClick={toggleSidebar} className={`hidden lg:flex items-center gap-4 px-4 py-3 rounded-xl text-[14.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 w-full ${!sidebarOpen && 'justify-center'}`}>
+              {sidebarOpen ? <ChevronLeft size={20} className="shrink-0" /> : <ChevronRight size={20} className="shrink-0" />}
+              <span className={`truncate ${!sidebarOpen && 'hidden'}`}>Kecilkan</span>
+            </button>
+          </div>
+        ) : (
         <div className="p-4 border-t border-slate-200 dark:border-white/5 shrink-0 flex flex-col gap-2">
           <button onClick={toggleSidebar} className={`hidden lg:flex items-center gap-4 px-4 py-3 rounded-xl text-[14.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-200 ${!sidebarOpen && 'justify-center'}`}>
             {sidebarOpen ? <ChevronLeft size={20} className="shrink-0" /> : <ChevronRight size={20} className="shrink-0" />}
@@ -111,6 +130,7 @@ function Sidebar() {
             </button>
           </div>
         </div>
+        )}
       </aside>
     </>
   );

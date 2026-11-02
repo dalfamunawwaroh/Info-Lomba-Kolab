@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { syncCompetition, deleteRow, logActivity } from '../db/sync.js';
+import { syncCompetition, syncTeam, syncSoloRegistration, deleteRow, logActivity } from '../db/sync.js';
 
 export const getCompetitions = (req, res) => {
   try {
@@ -30,6 +30,7 @@ export const getCompetitions = (req, res) => {
     }
     const payload = competitions.map((c) => ({
       ...c,
+      name: c.title, // alias: banyak komponen frontend membaca .name
       _count: { teams: teamCount[c.id] || 0 },
     }));
 
@@ -54,7 +55,7 @@ export const getCompetitionById = (req, res) => {
 
     return res.json({
       success: true,
-      data: { ...competition, teams, _count: { teams: teams.length } },
+      data: { ...competition, name: competition.title, teams, _count: { teams: teams.length } },
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -176,7 +177,7 @@ export const deleteCompetition = (req, res) => {
 export const registerToCompetition = (req, res) => {
   try {
     const { id } = req.params;
-    const { team_id, user_id } = req.body;
+    const { has_team, team_name, member_ids, notes } = req.body;
     const data = db.read();
 
     const comp = data.competitions.find((c) => c.id === Number(id));
@@ -184,10 +185,143 @@ export const registerToCompetition = (req, res) => {
       return res.status(404).json({ success: false, message: 'Kompetisi tidak ditemukan' });
     }
 
-    return res.json({
+    const user = req.user;
+    if (!user || user.role !== 'mahasiswa') {
+      return res.status(403).json({ success: false, message: 'Hanya mahasiswa yang dapat mendaftar lomba' });
+    }
+    if (comp.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Lomba ini sudah dibatalkan' });
+    }
+    if (comp.registration_deadline) {
+      const dl = new Date(comp.registration_deadline).getTime();
+      if (Number.isFinite(dl) && dl < Date.now()) {
+        return res.status(400).json({
+          success: false,
+          message: `Pendaftaran ditutup pada ${String(comp.registration_deadline).slice(0, 10)}`,
+        });
+      }
+    }
+
+    // Cek duplikat: sudah jadi anggota/ketua tim di lomba ini, atau sudah daftar solo
+    const inTeam = (data.teams || []).find(
+      (t) =>
+        t.competition_id === comp.id &&
+        (t.leader_id === user.id || (t.members || []).some((m) => m.user_id === user.id))
+    );
+    const existingReg = (data.solo_registrations || []).find(
+      (r) => r.competition_id === comp.id && r.user_id === user.id && r.status !== 'rejected'
+    );
+    if (inTeam || existingReg) {
+      return res.status(400).json({ success: false, message: 'Anda sudah terdaftar pada lomba ini' });
+    }
+
+    if (has_team) {
+      if (!team_name || !String(team_name).trim()) {
+        return res.status(400).json({ success: false, message: 'Nama tim wajib diisi' });
+      }
+
+      const ids = [...new Set((Array.isArray(member_ids) ? member_ids : []).map(Number))];
+      if (ids.length < 1) {
+        return res.status(400).json({ success: false, message: 'Minimal 1 anggota selain ketua' });
+      }
+      const maxMembers = Number(comp.max_team_members) || 10;
+      if (ids.length + 1 > maxMembers) {
+        return res.status(400).json({ success: false, message: `Maksimal ${maxMembers} anggota tim` });
+      }
+
+      const memberList = [
+        { user_id: user.id, name: user.name, role: 'Ketua Tim', status: 'confirmed' },
+      ];
+      for (const mid of ids) {
+        if (mid === user.id) continue;
+        const mu = data.users.find((u) => u.id === mid);
+        if (!mu || mu.role !== 'mahasiswa') {
+          return res.status(400).json({ success: false, message: 'Ada anggota yang tidak ditemukan atau bukan mahasiswa' });
+        }
+        if ((mu.status || 'active') !== 'active') {
+          return res.status(400).json({ success: false, message: `${mu.name} tidak aktif` });
+        }
+        const already = (data.teams || []).find(
+          (t) =>
+            t.competition_id === comp.id &&
+            (t.leader_id === mu.id || (t.members || []).some((m) => m.user_id === mu.id))
+        );
+        if (already) {
+          return res.status(400).json({
+            success: false,
+            message: `${mu.name} sudah terdaftar di lomba ini (tim ${already.name})`,
+          });
+        }
+        memberList.push({ user_id: mu.id, name: mu.name, role: 'Anggota', status: 'confirmed' });
+      }
+
+      const newTeam = {
+        id: Date.now(),
+        name: String(team_name).trim(),
+        competition_id: comp.id,
+        competition_title: comp.title,
+        leader_id: user.id,
+        leader_name: user.name,
+        advisor_id: null,
+        advisor_name: null,
+        advisor_status: null,
+        status: 'forming',
+        members: memberList,
+        created_at: new Date().toISOString(),
+      };
+
+      data.teams.push(newTeam);
+      db.write(data);
+
+      syncTeam(newTeam);
+      logActivity({
+        entity_type: 'team',
+        entity_id: newTeam.id,
+        action: 'create',
+        title: `Tim "${newTeam.name}" dibuat via pendaftaran lomba`,
+        description: `Lomba: ${comp.title} • Ketua: ${user.name}`,
+        actor: user,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Berhasil mendaftar! Tim berhasil dibuat.',
+        data: newTeam,
+      });
+    }
+
+    // Tanpa tim → daftar solo, menunggu admin menyesuaikan tim
+    if (!Array.isArray(data.solo_registrations)) data.solo_registrations = [];
+    const reg = {
+      id: Date.now(),
+      competition_id: comp.id,
+      competition_title: comp.title,
+      user_id: user.id,
+      user_name: user.name,
+      user_email: user.email || '',
+      user_nim: user.nip_nim || '',
+      status: 'waiting',
+      notes: notes || '',
+      assigned_team_id: null,
+      created_at: new Date().toISOString(),
+    };
+
+    data.solo_registrations.unshift(reg);
+    db.write(data);
+
+    syncSoloRegistration(reg);
+    logActivity({
+      entity_type: 'registration',
+      entity_id: reg.id,
+      action: 'create',
+      title: `Pendaftaran solo "${user.name}" ke lomba "${comp.title}"`,
+      actor: user,
+    });
+
+    return res.status(201).json({
       success: true,
-      message: 'Berhasil mendaftar ke kompetisi',
-      data: { competition_id: comp.id, team_id, user_id, status: 'registered' },
+      message: 'Berhasil mendaftar. Tim akan disesuaikan oleh admin.',
+      data: reg,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -196,10 +330,11 @@ export const registerToCompetition = (req, res) => {
 
 export const getSoloRegistrations = (req, res) => {
   try {
-    const { id } = req.params;
     const data = db.read();
-    const soloUsers = data.users.filter((u) => u.role === 'mahasiswa').slice(0, 3);
-    return res.json({ success: true, data: soloUsers });
+    const regs = (data.solo_registrations || []).filter(
+      (r) => r.competition_id === Number(req.params.id)
+    );
+    return res.json({ success: true, data: regs });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
