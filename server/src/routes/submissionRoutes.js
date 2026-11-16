@@ -6,7 +6,8 @@ const router = Router();
 
 router.use(authenticateToken);
 
-router.get('/', getSubmissions);
+// Monitoring pengajuan hanya untuk admin — berisi data pribadi pemohon.
+router.get('/', requireRole('admin'), getSubmissions);
 router.patch('/:id', requireRole('admin'), respondToSubmission);
 
 export default router;

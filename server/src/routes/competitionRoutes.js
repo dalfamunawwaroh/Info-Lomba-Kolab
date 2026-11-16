@@ -21,6 +21,7 @@ router.post('/', requireRole('admin', 'dosen'), createCompetition);
 router.patch('/:id', requireRole('admin', 'dosen'), updateCompetition);
 router.delete('/:id', requireRole('admin'), deleteCompetition);
 router.post('/:id/register', registerToCompetition);
-router.get('/:id/solo', getSoloRegistrations);
+// Daftar pendaftar solo sebuah lomba hanya untuk admin (data pribadi pendaftar).
+router.get('/:id/solo', requireRole('admin'), getSoloRegistrations);
 
 export default router;

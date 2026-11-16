@@ -79,27 +79,32 @@ export default function ProfilePage() {
           if (histRes?.data) hist = histRes.data;
         } catch (e) {}
 
+        // Fallback terakhir: jangan mengarang email/role — biarkan kosong
+        // supaya UI tidak menampilkan identitas palsu.
         const activeUser = u || currentUser || {
-          id: 1,
+          id: null,
           name: 'Pengguna Ko+Lab',
-          email: 'user@kolab.id',
-          role: 'admin',
-          created_at: new Date().toISOString(),
+          email: '',
+          role: '',
+          created_at: null,
         };
 
         setProfile(activeUser);
         setHistoryData(hist);
         
+        // Isi form hanya dengan data yang benar-benar ada. Field yang tidak
+        // tersedia (mis. profil orang lain yang dibatasi server) dibiarkan
+        // kosong agar tidak menampilkan data palsu.
         setFormData({
-          name: activeUser?.name || 'Pengguna Ko+Lab',
-          email: activeUser?.email || 'user@kolab.id',
-          phone: activeUser?.phone || '0812-3456-7890',
-          identityNumber: activeUser?.nim_nip || (activeUser?.role === 'mahasiswa' ? '2208101010023' : '198503152010121003'),
-          department: activeUser?.department || 'Informatika & Ilmu Komputer',
-          bio: activeUser?.bio || 'Mahasiswa berprestasi yang menyukai pengembangan aplikasi web & kecerdasan buatan.',
-          skills: skillsToText(activeUser?.skills) || 'React.js, Tailwind CSS, UI/UX Design, Node.js',
-          linkedin: activeUser?.linkedin || 'https://linkedin.com/in/user-kolab',
-          github: activeUser?.github || 'https://github.com/user-kolab',
+          name: activeUser?.name || '',
+          email: activeUser?.email || '',
+          phone: activeUser?.phone || '',
+          identityNumber: activeUser?.nip_nim || '',
+          department: activeUser?.department || activeUser?.program_studi || '',
+          bio: activeUser?.bio || '',
+          skills: skillsToText(activeUser?.skills) || '',
+          linkedin: activeUser?.linkedin || '',
+          github: activeUser?.github || '',
         });
       } catch (err) {
         console.error('Failed to load profile:', err);

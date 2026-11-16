@@ -4,9 +4,29 @@ import { syncUser, deleteRow, logActivity } from '../db/sync.js';
 
 const DEFAULT_PASSWORD = 'KoLab2026!';
 
+/**
+ * Field yang boleh dilihat user non-admin.
+ * Cukup untuk memilih anggota tim / dosen pembimbing, tanpa membocorkan
+ * data pribadi (telepon, alamat, dsb).
+ */
+const PUBLIC_USER_FIELDS = [
+  'id', 'name', 'role', 'nip_nim', 'startup_id', 'startup_name',
+  'position', 'program_studi', 'expertise', 'avatar', 'status',
+  'competition_stats', 'competition_names',
+];
+
+const publicUserView = (user) => {
+  const out = {};
+  for (const key of PUBLIC_USER_FIELDS) {
+    if (key in user) out[key] = user[key];
+  }
+  return out;
+};
+
 export const getUsers = (req, res) => {
   try {
     const { role, search, status, startup_id, page = 1, limit = 50 } = req.query;
+    const isAdmin = req.user?.role === 'admin';
     const data = db.read();
     let users = data.users.map(({ password, ...u }) => u);
 
@@ -54,7 +74,13 @@ export const getUsers = (req, res) => {
       }
       let active = 0;
       compIds.forEach((id) => { if (activeCompIds.has(id)) active += 1; });
-      return { ...u, competition_stats: { active, total: compIds.size }, competition_names: compNames.slice(0, 3) };
+      const row = { ...u, competition_stats: { active, total: compIds.size }, competition_names: compNames.slice(0, 3) };
+
+      // Non-admin hanya boleh melihat data yang dibutuhkan untuk memilih
+      // anggota tim / dosen pembimbing. Nomor telepon, alamat, dan detail
+      // pribadi lain tidak ikut dikirim.
+      if (!isAdmin) return publicUserView(row);
+      return row;
     });
 
     return res.json({
@@ -83,6 +109,15 @@ export const getUserById = (req, res) => {
     }
 
     const { password, ...userWithoutPassword } = user;
+
+    // Admin melihat data lengkap. User biasa melihat data lengkap HANYA untuk
+    // dirinya sendiri; profil orang lain dibatasi ke field publik.
+    const isSelf = req.user?.id === user.id;
+    const isAdmin = req.user?.role === 'admin';
+    if (!isAdmin && !isSelf) {
+      return res.json({ success: true, data: publicUserView(userWithoutPassword) });
+    }
+
     return res.json({ success: true, data: userWithoutPassword });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
