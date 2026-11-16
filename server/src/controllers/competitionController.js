@@ -1,9 +1,21 @@
 import { db } from '../db/index.js';
 import { syncCompetition, syncTeam, syncSoloRegistration, deleteRow, logActivity } from '../db/sync.js';
 
+/** Nama pembuat lomba (untuk "Ditambahkan oleh" di detail lomba). */
+const withCreator = (data, comp) => {
+  if (!comp) return comp;
+  const creator = (data.users || []).find((u) => u.id === comp.created_by) || null;
+  return {
+    ...comp,
+    name: comp.title,
+    created_by_name: creator ? creator.name : null,
+    created_by_role: creator ? creator.role : null,
+  };
+};
+
 export const getCompetitions = (req, res) => {
   try {
-    const { status, category, search } = req.query;
+    const { status, category, search, mine } = req.query;
     const data = db.read();
     let competitions = [...data.competitions];
 
@@ -18,9 +30,13 @@ export const getCompetitions = (req, res) => {
       competitions = competitions.filter(
         (c) =>
           c.title.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q) ||
-          c.organizer.toLowerCase().includes(q)
+          (c.description || '').toLowerCase().includes(q) ||
+          (c.organizer || '').toLowerCase().includes(q)
       );
+    }
+    // ?mine=true → hanya lomba yang dibuat user yang login (dipakai dosen)
+    if (mine === 'true' && req.user) {
+      competitions = competitions.filter((c) => c.created_by === req.user.id);
     }
 
     // Hitung jumlah tim per lomba (real, dari data.tim yang baru dibuat)
@@ -29,9 +45,9 @@ export const getCompetitions = (req, res) => {
       teamCount[t.competition_id] = (teamCount[t.competition_id] || 0) + 1;
     }
     const payload = competitions.map((c) => ({
-      ...c,
-      name: c.title, // alias: banyak komponen frontend membaca .name
+      ...withCreator(data, c),
       _count: { teams: teamCount[c.id] || 0 },
+      is_owner: Boolean(req.user && c.created_by === req.user.id),
     }));
 
     return res.json({ success: true, data: payload });
@@ -51,11 +67,24 @@ export const getCompetitionById = (req, res) => {
     }
 
     // Sertakan daftar tim lomba ini agar tampilan "Tim Terdaftar" selalu ter-update
-    const teams = data.teams.filter((t) => t.competition_id === competition.id);
+    const teams = data.teams
+      .filter((t) => t.competition_id === competition.id)
+      .map((t) => {
+        const leader = (data.users || []).find((u) => u.id === t.leader_id) || null;
+        return {
+          ...t,
+          leader: leader ? { id: leader.id, name: leader.name } : (t.leader_name ? { id: t.leader_id, name: t.leader_name } : null),
+        };
+      });
 
     return res.json({
       success: true,
-      data: { ...competition, name: competition.title, teams, _count: { teams: teams.length } },
+      data: {
+        ...withCreator(data, competition),
+        teams,
+        _count: { teams: teams.length },
+        is_owner: Boolean(req.user && competition.created_by === req.user.id),
+      },
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -67,33 +96,33 @@ export const createCompetition = (req, res) => {
     const {
       title, category, organizer, description, prize_pool,
       registration_deadline, event_date, max_team_members,
-      requirements, image_url, guidebook_url, status,
+      requirements, image_url, guidebook_url, status, link,
       needs_advisor, max_advisors, location,
       registration_fee, registration_url,
     } = req.body;
 
-    if (!title || !registration_deadline) {
-      return res.status(400).json({ success: false, message: 'Judul dan batas pendaftaran wajib diisi' });
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ success: false, message: 'Nama lomba wajib diisi' });
     }
 
     const data = db.read();
     const newComp = {
       id: Date.now(),
-      title,
+      title: String(title).trim(),
       category: category || 'General Innovation',
       organizer: organizer || '',
       description: description || '',
       prize_pool: prize_pool || '',
       registration_fee: registration_fee || 'Gratis',
-      registration_url: registration_url || '',
-      registration_deadline,
-      event_date: event_date || registration_deadline,
+      registration_url: registration_url || link || '',
+      registration_deadline: registration_deadline || event_date || '',
+      event_date: event_date || registration_deadline || '',
       status: status || 'upcoming',
       max_team_members: Number(max_team_members) || 3,
       needs_advisor: needs_advisor === true || needs_advisor === 'true',
-      max_advisors: needs_advisor ? (Number(max_advisors) || 1) : 1,
+      max_advisors: (needs_advisor === true || needs_advisor === 'true') ? (Number(max_advisors) || 1) : 1,
       location: location || '',
-      requirements: requirements || [],
+      requirements: Array.isArray(requirements) ? requirements : [],
       guidebook_url: guidebook_url || '',
       image_url: image_url || '',
       created_by: req.user ? req.user.id : null,
@@ -109,14 +138,14 @@ export const createCompetition = (req, res) => {
       entity_id: newComp.id,
       action: 'create',
       title: `Lomba "${newComp.title}" ditambahkan`,
-      description: `Kategori: ${newComp.category} • Deadline: ${newComp.registration_deadline}`,
+      description: `Kategori: ${newComp.category} • Deadline: ${newComp.registration_deadline || '-'} • Oleh: ${req.user?.name || '-'}`,
       actor: req.user,
     });
 
     return res.status(201).json({
       success: true,
       message: 'Kompetisi lomba berhasil ditambahkan',
-      data: newComp,
+      data: { ...withCreator(data, newComp), is_owner: true },
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -133,13 +162,40 @@ export const updateCompetition = (req, res) => {
       return res.status(404).json({ success: false, message: 'Kompetisi tidak ditemukan' });
     }
 
-    const updated = { ...data.competitions[index], ...req.body };
+    const current = data.competitions[index];
+
+    // F-05: dosen hanya boleh mengedit lomba yang ia buat sendiri.
+    if (req.user.role === 'dosen' && current.created_by !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Anda hanya dapat mengedit lomba yang Anda buat sendiri',
+      });
+    }
+
+    // Field yang tidak boleh diubah lewat endpoint ini
+    const { created_by, id: _ignoredId, ...body } = req.body;
+
+    const updated = { ...current, ...body };
+    // Kuota pembimbing selalu konsisten dengan kebutuhan pembimbing
+    if (updated.needs_advisor === false) updated.max_advisors = 1;
+
     data.competitions[index] = updated;
     db.write(data);
 
     syncCompetition(updated);
+    logActivity({
+      entity_type: 'competition',
+      entity_id: updated.id,
+      action: 'update',
+      title: `Lomba "${updated.title}" diperbarui`,
+      actor: req.user,
+    });
 
-    return res.json({ success: true, message: 'Kompetisi berhasil diperbarui', data: updated });
+    return res.json({
+      success: true,
+      message: 'Kompetisi berhasil diperbarui',
+      data: withCreator(data, updated),
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

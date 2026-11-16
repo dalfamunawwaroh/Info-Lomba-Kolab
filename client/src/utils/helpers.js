@@ -48,6 +48,29 @@ export function truncateText(text, maxLen = 100) {
 }
 
 /**
+ * Normalisasi daftar skill ke string berkoma (untuk input teks).
+ * API menyimpan `skills` sebagai array, sementara form memakai string.
+ * @param {string|string[]|null|undefined} skills
+ * @returns {string}
+ */
+export function skillsToText(skills) {
+  if (Array.isArray(skills)) return skills.filter(Boolean).join(', ');
+  if (typeof skills === 'string') return skills;
+  return '';
+}
+
+/**
+ * Ubah input teks berkoma menjadi array skill yang bersih.
+ * @param {string|string[]|null|undefined} text
+ * @returns {string[]}
+ */
+export function textToSkills(text) {
+  if (Array.isArray(text)) return text.filter(Boolean);
+  if (typeof text !== 'string') return [];
+  return text.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+/**
  * Get initials dari nama
  * @param {string} name
  * @returns {string}

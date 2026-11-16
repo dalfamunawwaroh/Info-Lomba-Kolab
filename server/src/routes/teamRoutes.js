@@ -21,7 +21,9 @@ const router = Router();
 
 router.use(authenticateToken);
 
-router.get('/', getTeams);
+// Daftar SELURUH tim hanya untuk admin (Kelola Tim / Assign Dosen).
+// Mahasiswa & dosen memakai GET /teams/mine dan GET /teams/:id (dengan cek akses).
+router.get('/', requireRole('admin'), getTeams);
 // Aksi mahasiswa atas tim miliknya (didaftarkan sebelum '/:id')
 router.get('/mine', requireRole('mahasiswa'), getMyTeams);
 router.delete('/solo/:regId', requireRole('mahasiswa'), cancelSoloRegistration);

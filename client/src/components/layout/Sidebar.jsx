@@ -2,7 +2,8 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   LayoutDashboard, Users, Building2, Trophy, UsersRound, Activity,
-  FileText, ClipboardList, History, ChevronLeft, ChevronRight, LogOut, X, Send, Megaphone, UserCircle2
+  FileText, ClipboardList, History, ChevronLeft, ChevronRight, LogOut, X, Send, Megaphone, UserCog,
+  UserPlus, GraduationCap, UserCircle2,
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
 import { getInitials } from '@/utils/helpers';
@@ -16,20 +17,26 @@ const adminMenu = [
   { to: '/admin/startups', icon: Building2, label: 'Kelola Startup' },
   { to: '/admin/competitions', icon: Trophy, label: 'Kelola Lomba' },
   { to: '/admin/teams', icon: UsersRound, label: 'Kelola Tim' },
+  { to: '/admin/solo-registrations', icon: UserPlus, label: 'Pendaftar Solo' },
+  { to: '/admin/assign-dosen', icon: GraduationCap, label: 'Assign Dosen' },
   { section: 'Operasional' },
   { to: '/admin/submissions', icon: ClipboardList, label: 'Pengajuan' },
   { to: '/admin/broadcast', icon: Megaphone, label: 'Broadcast' },
 ];
 
 const dosenMenu = [
+  { section: 'Utama' },
   { to: '/dosen', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/dosen/competitions', icon: Trophy, label: 'Info Lomba' },
-  { to: '/dosen/competitions/add', icon: FileText, label: 'Tambah Lomba' },
+  { section: 'Bimbingan' },
   { to: '/dosen/advisor-requests', icon: ClipboardList, label: 'Pengajuan Masuk' },
   { to: '/dosen/my-teams', icon: UsersRound, label: 'Tim Bimbingan' },
   { to: '/dosen/self-assign', icon: Send, label: 'Ajukan Diri' },
-  { to: '/dosen/team-change-requests', icon: ClipboardList, label: 'Ajukan Perubahan' },
+  { to: '/dosen/team-change-requests', icon: UserCog, label: 'Ajukan Perubahan' },
+  { section: 'Info Lomba' },
+  { to: '/dosen/competitions', icon: Trophy, label: 'Daftar Lomba' },
+  { to: '/dosen/competitions/add', icon: FileText, label: 'Tambah Lomba' },
   { to: '/dosen/history', icon: History, label: 'History' },
+  { section: 'Lainnya' },
   { to: '/dosen/directory', icon: Users, label: 'Direktori' },
 ];
 

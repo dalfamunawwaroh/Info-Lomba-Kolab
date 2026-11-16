@@ -11,7 +11,7 @@ import {
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ROLE_LABELS, STATUS_LABELS } from '@/utils/constants';
-import { formatDate, getInitials } from '@/utils/helpers';
+import { formatDate, getInitials, skillsToText } from '@/utils/helpers';
 import useUIStore from '@/store/uiStore';
 
 export default function ProfilePage() {
@@ -79,27 +79,32 @@ export default function ProfilePage() {
           if (histRes?.data) hist = histRes.data;
         } catch (e) {}
 
+        // Fallback terakhir: jangan mengarang email/role — biarkan kosong
+        // supaya UI tidak menampilkan identitas palsu.
         const activeUser = u || currentUser || {
-          id: 1,
+          id: null,
           name: 'Pengguna Ko+Lab',
-          email: 'user@kolab.id',
-          role: 'admin',
-          created_at: new Date().toISOString(),
+          email: '',
+          role: '',
+          created_at: null,
         };
 
         setProfile(activeUser);
         setHistoryData(hist);
         
+        // Isi form hanya dengan data yang benar-benar ada. Field yang tidak
+        // tersedia (mis. profil orang lain yang dibatasi server) dibiarkan
+        // kosong agar tidak menampilkan data palsu.
         setFormData({
-          name: activeUser?.name || 'Pengguna Ko+Lab',
-          email: activeUser?.email || 'user@kolab.id',
-          phone: activeUser?.phone || '0812-3456-7890',
-          identityNumber: activeUser?.nim_nip || (activeUser?.role === 'mahasiswa' ? '2208101010023' : '198503152010121003'),
-          department: activeUser?.department || 'Informatika & Ilmu Komputer',
-          bio: activeUser?.bio || 'Mahasiswa berprestasi yang menyukai pengembangan aplikasi web & kecerdasan buatan.',
-          skills: activeUser?.skills || 'React.js, Tailwind CSS, UI/UX Design, Node.js',
-          linkedin: activeUser?.linkedin || 'https://linkedin.com/in/user-kolab',
-          github: activeUser?.github || 'https://github.com/user-kolab',
+          name: activeUser?.name || '',
+          email: activeUser?.email || '',
+          phone: activeUser?.phone || '',
+          identityNumber: activeUser?.nip_nim || '',
+          department: activeUser?.department || activeUser?.program_studi || '',
+          bio: activeUser?.bio || '',
+          skills: skillsToText(activeUser?.skills) || '',
+          linkedin: activeUser?.linkedin || '',
+          github: activeUser?.github || '',
         });
       } catch (err) {
         console.error('Failed to load profile:', err);
@@ -398,7 +403,7 @@ export default function ProfilePage() {
                 <div>
                   <span className="text-slate-400 block mb-1">Keahlian Utama:</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {formData.skills.split(',').map((sk, idx) => (
+                    {skillsToText(formData.skills).split(',').filter(Boolean).map((sk, idx) => (
                       <span key={idx} className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20 font-medium">
                         {sk.trim()}
                       </span>

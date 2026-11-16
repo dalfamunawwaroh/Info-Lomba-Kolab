@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { getActivities } from '../controllers/activityController.js';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
 router.use(authenticateToken);
-router.get('/', getActivities);
+// Log aktivitas sistem hanya untuk admin.
+router.get('/', requireRole('admin'), getActivities);
 
 export default router;

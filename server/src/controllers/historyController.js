@@ -49,13 +49,16 @@ export const getUserHistory = (req, res) => {
       if (!comp) continue;
 
       const roleInTeam = member ? (t.leader_id === userId ? 'leader' : 'member') : 'advisor';
-      items.push(
-        makeItem(
-          comp,
-          { id: t.id, name: t.name, role_in_team: roleInTeam, status: t.status },
-          t.advisor_name ? [{ id: t.advisor_id, name: t.advisor_name }] : []
-        )
-      );
+      const advisors = [];
+      if (t.advisor_id && t.advisor_status === 'approved') {
+        advisors.push({ id: t.advisor_id, name: t.advisor_name });
+      }
+      for (const a of t.advisors || []) {
+        if (a.status === 'approved' && !advisors.find((x) => x.id === a.id)) {
+          advisors.push({ id: a.id, name: a.name });
+        }
+      }
+      items.push(makeItem(comp, { id: t.id, name: t.name, role_in_team: roleInTeam, status: t.status }, advisors));
     }
 
     // 2) Pendaftaran solo yang masih menunggu admin (belum berubah jadi tim)

@@ -1,167 +1,201 @@
-import { useState, useEffect } from 'react';
-import { Send, UsersRound, Plus, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  UsersRound, ClipboardList, Send, Clock, CheckCircle2, XCircle,
+  MessageSquare, Trophy, ArrowRight, Crown,
+} from 'lucide-react';
 import advisorService from '@/services/advisorService';
-import userService from '@/services/userService';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
+import { TeamChangeRequestModal } from '@/components/dosen/TeamChangeRequestModal';
 import { Button } from '@/components/common/Button';
-import { Select } from '@/components/common/Select';
-import { Input } from '@/components/common/Input';
-import { Modal } from '@/components/common/Modal';
+import { Badge } from '@/components/common/Badge';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ADVISOR_STATUS_LABELS } from '@/utils/constants';
+import { formatRelativeTime, getInitials } from '@/utils/helpers';
 import useUIStore from '@/store/uiStore';
 
 export default function TeamChangeRequestsPage() {
   const [myTeams, setMyTeams] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [changeType, setChangeType] = useState('');
-  const [selectedUser, setSelectedUser] = useState('');
-  const [description, setDescription] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [modalTeam, setModalTeam] = useState(null);
   const addToast = useUIStore((s) => s.addToast);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    Promise.all([
-      advisorService.getMyTeams(),
-      userService.getUsers({ role: 'mahasiswa', is_active: true, limit: 100 }),
-    ]).then(([teamsRes, usersRes]) => {
+  const load = useCallback(async () => {
+    try {
+      const [teamsRes, reqRes] = await Promise.all([
+        advisorService.getMyTeams(),
+        advisorService.getMyChangeRequests(),
+      ]);
       setMyTeams(teamsRes.data || []);
-      setUsers(usersRes.data || []);
-    }).catch(() => addToast({ type: 'error', message: 'Gagal memuat data' }))
-    .finally(() => setLoading(false));
+      setRequests(reqRes.data || []);
+    } catch {
+      addToast({ type: 'error', message: 'Gagal memuat data' });
+    } finally {
+      setLoading(false);
+    }
   }, [addToast]);
 
-  const openRequest = (team) => {
-    setSelectedTeam(team);
-    setChangeType('');
-    setSelectedUser('');
-    setDescription('');
-    setShowModal(true);
-  };
+  useEffect(() => { load(); }, [load]);
 
-  const handleSubmit = async () => {
-    if (!description.trim()) {
-      addToast({ type: 'error', message: 'Deskripsi wajib diisi' });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      // This would call submissionService to create a team_change submission
-      // For now, show success
-      addToast({ type: 'success', message: 'Pengajuan berhasil dikirim. Menunggu persetujuan admin.' });
-      setShowModal(false);
-    } catch (err) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Gagal mengirim pengajuan' });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  if (loading) return <LoadingSpinner className="py-16" />;
 
-  if (loading) return <LoadingSpinner className="py-12" />;
+  const pendingByTeam = {};
+  requests.forEach((r) => {
+    if (r.status === 'pending') pendingByTeam[r.team_id] = r;
+  });
+
+  const approvedTeams = myTeams.filter((t) => t.status === 'approved' || t.team?.advisor_status === 'approved');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-2xl font-bold">Ajukan Perubahan Tim</h1>
-        <p className="text-muted-foreground mt-1">Ajukan perubahan komposisi tim yang kamu bimbing ke admin</p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Ajukan Perubahan Tim</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Ajukan penambahan anggota, penggantian ketua, atau penghapusan anggota ke admin.
+        </p>
       </div>
 
-      {myTeams.length === 0 ? (
+      {/* Daftar tim */}
+      {approvedTeams.length === 0 ? (
         <EmptyState
           icon={UsersRound}
           title="Belum ada tim bimbingan"
           description="Anda belum membimbing tim manapun. Ajukan diri sebagai pembimbing terlebih dahulu."
+          action={
+            <Button onClick={() => navigate('/dosen/self-assign')} className="rounded-full">
+              <Send size={15} className="mr-1.5" /> Ajukan Diri
+            </Button>
+          }
         />
       ) : (
-        <div className="space-y-4 stagger-children">
-          {myTeams.filter(t => t.status === 'approved').map((item) => (
-            <Card key={item.id} className="card-hover">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg">{item.team?.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Lomba: {item.team?.competition?.name}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {item.team?.members?.map((m) => (
-                        <span key={m.user?.id} className="inline-flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-full">
-                          {m.user?.name}
-                          {m.role_in_team === 'leader' && <span className="text-yellow-500">&#9733;</span>}
-                        </span>
-                      ))}
+        <div className="grid gap-4 md:grid-cols-2 stagger-children">
+          {approvedTeams.map((item) => {
+            const team = item.team || item;
+            const pending = pendingByTeam[team.id];
+            return (
+              <div
+                key={item.id}
+                className="rounded-[28px] bg-white dark:bg-[#131620]/90 border border-slate-200/80 dark:border-white/10 shadow-sm p-5 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white flex items-center justify-center font-extrabold text-xs shrink-0">
+                      {getInitials(team.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-slate-900 dark:text-white truncate">{team.name}</h3>
+                      <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate">
+                        <Trophy size={10} /> {team.competition?.name || team.competition_title || '-'}
+                      </p>
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => openRequest(item)}>
-                    <Send className="h-4 w-4 mr-1.5" />Ajukan Perubahan
-                  </Button>
+                  <Badge variant="outline">{team.members?.length || 0} anggota</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {(team.members || []).map((m) => (
+                    <span key={m.user_id} className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                      {m.user_id === team.leader_id && <Crown size={9} className="text-amber-500" />}
+                      {m.name}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-white/5">
+                  <Link
+                    to={`/dosen/my-teams/${team.id}`}
+                    className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 inline-flex items-center gap-1"
+                  >
+                    Detail Tim <ArrowRight size={11} />
+                  </Link>
+                  {pending ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
+                      <Clock size={13} /> Menunggu admin
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => setModalTeam(team)}
+                      className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-4"
+                    >
+                      <ClipboardList size={13} className="mr-1.5" /> Ajukan Perubahan
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Request Modal */}
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Ajukan Perubahan Tim">
-        {selectedTeam && (
-          <div className="space-y-4">
-            <div className="bg-muted/50 rounded-xl p-3">
-              <p className="text-sm font-medium">{selectedTeam.team?.name}</p>
-              <p className="text-xs text-muted-foreground">{selectedTeam.team?.competition?.name}</p>
-            </div>
+      {/* Riwayat pengajuan */}
+      <div className="rounded-[28px] bg-white dark:bg-[#131620]/90 border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="h-1.5 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500" />
+        <div className="p-6">
+          <h2 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+            <ClipboardList size={17} className="text-purple-500" /> Riwayat Pengajuan Perubahan
+            <span className="text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300 px-2 py-0.5 rounded-full">
+              {requests.length}
+            </span>
+          </h2>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Jenis Perubahan</label>
-              <Select value={changeType} onChange={(e) => setChangeType(e.target.value)}>
-                <option value="">-- Pilih Jenis --</option>
-                <option value="add_member">Tambah Anggota</option>
-                <option value="remove_member">Hapus Anggota</option>
-                <option value="change_leader">Ganti Ketua</option>
-              </Select>
+          {requests.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+              Belum ada pengajuan perubahan tim.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {requests.map((r) => (
+                <div key={r.id} className="rounded-2xl border border-slate-200/70 dark:border-white/5 bg-slate-50/80 dark:bg-white/5 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-slate-800 dark:text-white">{r.team?.name || r.team_name}</span>
+                      <Badge variant="outline">{r.change_type_label || r.type_label || 'Perubahan Tim'}</Badge>
+                      <StatusBadge status={r.status} labels={ADVISOR_STATUS_LABELS} />
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-400">{formatRelativeTime(r.created_at)}</span>
+                  </div>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    {r.competition?.name || r.competition_title || '-'}
+                    {r.target_user_name ? ` • Target: ${r.target_user_name}` : ''}
+                  </p>
+                  {r.notes && (
+                    <p className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+                      <MessageSquare size={12} className="shrink-0 mt-0.5 text-slate-400" />
+                      <span>{r.notes}</span>
+                    </p>
+                  )}
+                  {r.admin_notes && (
+                    <p className="mt-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
+                      Catatan admin: {r.admin_notes}
+                    </p>
+                  )}
+                  {r.status === 'approved' && (
+                    <p className="mt-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Disetujui admin
+                    </p>
+                  )}
+                  {r.status === 'rejected' && (
+                    <p className="mt-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                      <XCircle size={12} /> Ditolak admin
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
+          )}
+        </div>
+      </div>
 
-            {(changeType === 'add_member' || changeType === 'change_leader') && (
-              <div className="space-y-2 animate-fade-in">
-                <label className="text-sm font-medium">
-                  {changeType === 'add_member' ? 'Anggota yang Ditambahkan' : 'Ketua Baru'}
-                </label>
-                <Select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
-                  <option value="">-- Pilih --</option>
-                  {users
-                    .filter(u => changeType === 'add_member' ? !selectedTeam.team?.members?.find(m => m.user?.id === u.id) : true)
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>{u.name} ({u.startup?.name || '-'})</option>
-                    ))}
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Alasan / Deskripsi *</label>
-              <textarea
-                className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Jelaskan alasan perubahan yang diajukan..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setShowModal(false)} className="rounded-xl">Batal</Button>
-              <Button onClick={handleSubmit} disabled={submitting} className="rounded-xl">
-                {submitting ? 'Mengirim...' : 'Kirim Pengajuan'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <TeamChangeRequestModal
+        isOpen={Boolean(modalTeam)}
+        onClose={() => setModalTeam(null)}
+        team={modalTeam}
+        onSuccess={load}
+      />
     </div>
   );
 }

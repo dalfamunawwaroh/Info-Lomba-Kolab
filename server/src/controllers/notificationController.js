@@ -1,4 +1,60 @@
 import { db } from '../db/index.js';
+import { isAdvisorOf } from '../utils/advisorHelpers.js';
+
+/** Notifikasi hasil keputusan admin atas pengajuan milik user (dosen). */
+const buildDosenSubmissionNotifs = (data, userId) => {
+  const out = [];
+  for (const s of data.submissions || []) {
+    if (s.applicant_id !== userId) continue;
+    if (!['approved', 'rejected'].includes(s.status)) continue;
+    if (!s.processed_at) continue;
+
+    const label = s.type_label || s.type;
+    out.push({
+      id: `notif-sub-${s.id}`,
+      type: 'submission',
+      title: `Pengajuan ${label} ${s.status === 'approved' ? 'Disetujui' : 'Ditolak'}`,
+      message:
+        s.status === 'approved'
+          ? `Pengajuan "${label}"${s.team_name ? ` untuk tim "${s.team_name}"` : ''} telah disetujui admin.`
+          : `Pengajuan "${label}"${s.team_name ? ` untuk tim "${s.team_name}"` : ''} ditolak admin${s.admin_notes ? `: ${s.admin_notes}` : '.'}`,
+      date: s.processed_at,
+      read: false,
+      link: s.type === 'team_change' ? '/dosen/team-change-requests' : '/dosen/self-assign',
+    });
+  }
+  return out;
+};
+
+/** Notifikasi untuk ketua tim saat pengajuan pembimbingnya direspons dosen/admin. */
+const buildLeaderAdvisorNotifs = (data, userId) => {
+  const out = [];
+  const myTeamIds = (data.teams || [])
+    .filter((t) => t.leader_id === userId)
+    .map((t) => t.id);
+
+  for (const s of data.submissions || []) {
+    if (!myTeamIds.includes(s.team_id)) continue;
+    if (s.type !== 'advisor_request' && s.type !== 'advisor_self_assign') continue;
+    if (!['approved', 'rejected'].includes(s.status)) continue;
+    if (!s.processed_at) continue;
+
+    const advisorName = s.advisor_name || s.applicant_name || 'Dosen';
+    out.push({
+      id: `notif-leader-${s.id}`,
+      type: 'advisor',
+      title: s.status === 'approved' ? 'Dosen Pembimbing Disetujui' : 'Pengajuan Dosen Ditolak',
+      message:
+        s.status === 'approved'
+          ? `${advisorName} telah menjadi dosen pembimbing tim "${s.team_name}".`
+          : `Pengajuan dosen pembimbing untuk tim "${s.team_name}" ditolak${s.rejection_reason ? `: ${s.rejection_reason}` : '.'}`,
+      date: s.processed_at,
+      read: false,
+      link: `/mahasiswa/teams/${s.team_id}`,
+    });
+  }
+  return out;
+};
 
 export const getNotifications = (req, res) => {
   try {
@@ -53,9 +109,13 @@ export const getNotifications = (req, res) => {
         }
       });
     } else if (role === 'dosen') {
-      // Pending advisor requests for this dosen
+      // Pengajuan pembimbing yang menargetkan dosen ini (field lama + multi-advisor).
       const pendingForMe = data.teams.filter(
-        (t) => t.advisor_status === 'pending' && (t.advisor_id === userId || t.advisor_name === req.user?.name)
+        (t) =>
+          t.advisor_status === 'pending' &&
+          (t.advisor_id === userId ||
+            t.advisor_name === req.user?.name ||
+            (t.advisors || []).some((a) => a.id === userId && a.status === 'pending'))
       );
       pendingForMe.forEach((t) => {
         notifications.push({
@@ -69,10 +129,8 @@ export const getNotifications = (req, res) => {
         });
       });
 
-      // Approved teams
-      const approvedForMe = data.teams.filter(
-        (t) => t.advisor_status === 'approved' && (t.advisor_id === userId || t.advisor_name === req.user?.name)
-      );
+      // Tim yang sudah dibimbing (field lama + multi-advisor)
+      const approvedForMe = data.teams.filter((t) => isAdvisorOf(t, userId));
       approvedForMe.forEach((t) => {
         notifications.push({
           id: `notif-approved-${t.id}`,
@@ -81,9 +139,12 @@ export const getNotifications = (req, res) => {
           message: `Anda membimbing tim "${t.name}" pada lomba ${t.competition_title}`,
           date: t.created_at,
           read: true,
-          link: '/dosen/teams',
+          link: '/dosen/my-teams',
         });
       });
+
+      // Hasil keputusan admin atas pengajuan dosen (ajukan diri / perubahan tim)
+      notifications.push(...buildDosenSubmissionNotifs(data, userId));
     } else {
       // Mahasiswa: teams they're in
       const myTeams = data.teams.filter(
@@ -130,6 +191,9 @@ export const getNotifications = (req, res) => {
           }
         }
       });
+
+      // Ketua tim: hasil keputusan pengajuan dosen pembimbing (F-10/F-11/F-12)
+      notifications.push(...buildLeaderAdvisorNotifs(data, userId));
     }
 
     // Sort by date descending

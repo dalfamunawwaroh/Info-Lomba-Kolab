@@ -47,16 +47,22 @@ export default function PengajuanPage() {
   const handleRespond = async (status) => {
     setResponding(true);
     try {
-      await submissionService.respondToSubmission(respondTarget.id, {
+      const res = await submissionService.respondToSubmission(respondTarget.id, {
         status,
         review_notes: reviewNotes || undefined,
       });
-      addToast({ type: 'success', message: `Pengajuan ${status === 'approved' ? 'disetujui' : 'ditolak'}` });
+      addToast({
+        type: 'success',
+        message: res?.message || `Pengajuan ${status === 'approved' ? 'disetujui' : 'ditolak'}`,
+      });
       setRespondTarget(null);
       setReviewNotes('');
       load();
     } catch (err) {
-      addToast({ type: 'error', message: 'Gagal merespons pengajuan' });
+      addToast({
+        type: 'error',
+        message: err.response?.data?.message || 'Gagal merespons pengajuan',
+      });
     } finally {
       setResponding(false);
     }
@@ -100,10 +106,23 @@ export default function PengajuanPage() {
                         </div>
                         <p className="text-sm font-medium">{sub.requester?.name}</p>
                         <p className="text-sm text-muted-foreground">{sub.description}</p>
+                        {sub.type === 'team_change' && (
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <Badge variant="outline">{sub.change_type_label || sub.change_type}</Badge>
+                            {sub.target_user_name && (
+                              <span className="text-muted-foreground">
+                                Target: <span className="font-medium text-foreground">{sub.target_user_name}</span>
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {sub.team && (
                           <p className="text-xs text-muted-foreground">
                             Tim: {sub.team.name} {sub.competition ? `(${sub.competition.name})` : ''}
                           </p>
+                        )}
+                        {sub.admin_notes && (
+                          <p className="text-xs text-muted-foreground italic">Catatan: {sub.admin_notes}</p>
                         )}
                         <p className="text-xs text-muted-foreground">{formatRelativeTime(sub.created_at)}</p>
                       </div>
@@ -128,9 +147,19 @@ export default function PengajuanPage() {
       <Modal isOpen={!!respondTarget} onClose={() => setRespondTarget(null)} title="Review Pengajuan">
         {respondTarget && (
           <div className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <p className="font-medium">{respondTarget.requester?.name}</p>
               <p className="text-sm text-muted-foreground">{respondTarget.description}</p>
+              {respondTarget.type === 'team_change' && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 p-3 text-sm space-y-1">
+                  <p className="font-medium text-amber-800 dark:text-amber-300">Perubahan yang akan diterapkan</p>
+                  <p className="text-amber-700 dark:text-amber-400">
+                    {respondTarget.change_type_label || respondTarget.change_type}
+                    {respondTarget.target_user_name ? `: ${respondTarget.target_user_name}` : ''}
+                    {respondTarget.team?.name ? ` → tim "${respondTarget.team.name}"` : ''}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Catatan (opsional)</label>
