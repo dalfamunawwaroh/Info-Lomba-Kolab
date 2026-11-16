@@ -43,6 +43,7 @@ import DetailLombaPage from '@/pages/mahasiswa/DetailLombaPage';
 import RegisterLombaPage from '@/pages/mahasiswa/RegisterLombaPage';
 import DetailTimMahasiswaPage from '@/pages/mahasiswa/DetailTimMahasiswaPage';
 import HistoryPage from '@/pages/mahasiswa/HistoryPage';
+import TimSayaPage from '@/pages/mahasiswa/TimSayaPage';
 
 // Shared Pages
 import ProfilePage from '@/pages/shared/ProfilePage';
@@ -182,6 +183,7 @@ function AppRoutes() {
         <Route path="competitions" element={<DaftarLombaPage />} />
         <Route path="competitions/:id" element={<DetailLombaPage />} />
         <Route path="competitions/:id/register" element={<RegisterLombaPage />} />
+        <Route path="my-teams" element={<TimSayaPage />} />
         <Route path="teams/:id" element={<DetailTimMahasiswaPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="directory" element={<DirektoriPage />} />

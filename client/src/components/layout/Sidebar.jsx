@@ -43,6 +43,7 @@ const dosenMenu = [
 const mahasiswaMenu = [
   { to: '/mahasiswa', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/mahasiswa/competitions', icon: Trophy, label: 'Daftar Lomba' },
+  { to: '/mahasiswa/my-teams', icon: UsersRound, label: 'Tim Saya' },
   { to: '/mahasiswa/history', icon: History, label: 'History' },
   { to: '/mahasiswa/directory', icon: Users, label: 'Direktori' },
 ];

@@ -1,0 +1,14 @@
+{
+  "name": "info-lomba-kolab",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Info Lomba Ko+Lab — jalankan server (API) dan client (Vite) sekaligus",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "build": "npm --prefix client run build"
+  }
+}

@@ -1,7 +1,7 @@
 import { db } from '../db/index.js';
 import { syncSubmission, syncTeam, logActivity } from '../db/sync.js';
 import { enrichSubmission } from './advisorController.js';
-import { getApprovedAdvisors, countApprovedAdvisors, advisorQuota } from '../utils/advisorHelpers.js';
+import { getApprovedAdvisors, countApprovedAdvisors, advisorQuota, syncPrimaryAdvisor } from '../utils/advisorHelpers.js';
 
 /** Tambah / perbarui satu entri pembimbing di `team.advisors[]`. */
 const upsertAdvisorEntry = (team, advisorId, advisorName, status) => {
@@ -144,9 +144,14 @@ export const respondToSubmission = (req, res) => {
       } else {
         resultMessage = 'Pengajuan perubahan tim ditolak';
       }
-    } else if (sub.type === 'advisor_self_assign' && sub.team_id) {
+    } else if (sub.type === 'advisor_self_assign' || sub.type === 'advisor_request') {
       updatedTeam = data.teams.find((t) => t.id === sub.team_id) || null;
       if (updatedTeam) {
+        const isTeamRequest = sub.type === 'advisor_request';
+        // Dosen yang terlibat: ajukan diri memakai applicant_id, permintaan tim memakai target_advisor_id.
+        const advisorId = isTeamRequest ? sub.target_advisor_id : sub.applicant_id;
+        const advisorName = isTeamRequest ? sub.target_advisor_name : sub.applicant_name;
+
         if (nextStatus === 'approved') {
           const comp = (data.competitions || []).find((c) => c.id === updatedTeam.competition_id);
           if (countApprovedAdvisors(updatedTeam) >= advisorQuota(comp)) {
@@ -155,18 +160,20 @@ export const respondToSubmission = (req, res) => {
               message: `Tim sudah memiliki jumlah dosen pembimbing maksimal (${advisorQuota(comp)})`,
             });
           }
-          upsertAdvisorEntry(updatedTeam, sub.applicant_id, sub.applicant_name, 'approved');
-          updatedTeam.advisor_id = sub.applicant_id;
-          updatedTeam.advisor_name = sub.applicant_name;
-          updatedTeam.advisor_status = 'approved';
-          resultMessage = `${sub.applicant_name} resmi menjadi dosen pembimbing "${updatedTeam.name}"`;
+          // Multi-pembimbing: dorong ke `advisors[]`, field lama disinkronkan helper.
+          upsertAdvisorEntry(updatedTeam, advisorId, advisorName, 'approved');
+          syncPrimaryAdvisor(updatedTeam);
+          resultMessage = `${advisorName} resmi menjadi dosen pembimbing "${updatedTeam.name}"`;
         } else {
           // Hanya turunkan status bila dosen ini belum approved di tim tersebut.
-          const stillApproved = getApprovedAdvisors(updatedTeam).some((a) => a.id === sub.applicant_id);
-          if (!stillApproved && !updatedTeam.advisor_id) {
-            updatedTeam.advisor_status = 'none';
+          const stillApproved = getApprovedAdvisors(updatedTeam).some((a) => a.id === advisorId);
+          if (!stillApproved) {
+            updatedTeam.advisors = (updatedTeam.advisors || []).filter((a) => a.id !== advisorId);
+            syncPrimaryAdvisor(updatedTeam);
           }
-          resultMessage = 'Pengajuan ajukan diri ditolak';
+          resultMessage = isTeamRequest
+            ? 'Pengajuan dosen pembimbing ditolak'
+            : 'Pengajuan ajukan diri ditolak';
         }
       }
     }

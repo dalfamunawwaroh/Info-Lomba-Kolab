@@ -99,10 +99,13 @@ export const getAdvisorRequests = (req, res) => {
     );
 
     if (!isAdmin) {
+      // Dosen melihat: pengajuan diri miliknya, pengajuan yang ditujukan kepadanya
+      // (advisor_request), atau entri yang mencatat dirinya sebagai advisor.
       requests = requests.filter(
         (s) =>
           s.applicant_id === req.user.id ||
-          s.advisor_id === req.user.id
+          s.advisor_id === req.user.id ||
+          s.target_advisor_id === req.user.id
       );
     }
     if (status) requests = requests.filter((s) => s.status === status);
@@ -447,6 +450,9 @@ export const respondToRequest = (req, res) => {
     if (status === 'rejected' && !String(rejection_reason || '').trim()) {
       return res.status(400).json({ success: false, message: 'Alasan penolakan wajib diisi' });
     }
+    if (request.type === 'advisor_request' && req.user.role === 'dosen' && request.target_advisor_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Pengajuan ini tidak ditujukan kepada Anda' });
+    }
 
     request.status = status;
     request.processed_at = new Date().toISOString();
@@ -475,11 +481,20 @@ export const respondToRequest = (req, res) => {
         syncPrimaryAdvisor(team);
         syncTeam(team);
         message = `${request.applicant_name} resmi menjadi dosen pembimbing "${team.name}"`;
-      } else if (request.type === 'advisor_request' && request.advisor_id) {
+      } else if (request.type === 'advisor_request') {
+        // Pengajuan ketua tim ke dosen. Dosen sasaran bisa tercatat di
+        // `target_advisor_id` (main) atau `advisor_id` (skema lama dalfa).
+        const targetId = request.target_advisor_id ?? request.advisor_id;
+        const targetName = request.target_advisor_name ?? request.advisor_name;
+        if (!targetId) {
+          return res.status(400).json({
+            success: false,
+            message: 'Pengajuan tidak memiliki dosen sasaran',
+          });
+        }
         const comp = (data.competitions || []).find((c) => c.id === team.competition_id);
         const quota = advisorQuota(comp);
-        const approvedCount = countApprovedAdvisors(team);
-        if (approvedCount >= quota) {
+        if (countApprovedAdvisors(team) >= quota) {
           return res.status(400).json({
             success: false,
             message: `Tim sudah memiliki jumlah dosen pembimbing maksimal (${quota})`,
@@ -487,23 +502,25 @@ export const respondToRequest = (req, res) => {
         }
         team.advisors = team.advisors || [];
         const existing = advisorListOnTeam(team);
-        if (!existing.find((a) => a.id === request.advisor_id)) {
-          team.advisors.push({ id: request.advisor_id, name: request.advisor_name, status: 'approved' });
+        if (!existing.find((a) => a.id === targetId)) {
+          team.advisors.push({ id: targetId, name: targetName, status: 'approved' });
         } else {
           team.advisors = team.advisors.map((a) =>
-            a.id === request.advisor_id ? { ...a, status: 'approved' } : a
+            a.id === targetId ? { ...a, status: 'approved' } : a
           );
         }
         // backward-compat: field lama selalu mencerminkan pembimbing utama
         syncPrimaryAdvisor(team);
         syncTeam(team);
-        message = `${request.advisor_name} resmi menjadi dosen pembimbing "${team.name}"`;
+        message = `${targetName} resmi menjadi dosen pembimbing "${team.name}"`;
       }
     } else if (team && status === 'rejected') {
       // Jangan turunkan status bila dosen ini masih approved di tim tersebut.
       // `advisor_self_assign` memakai applicant_id, bukan advisor_id.
       const rejectedId =
-        request.type === 'advisor_self_assign' ? request.applicant_id : request.advisor_id;
+        request.type === 'advisor_self_assign'
+          ? request.applicant_id
+          : (request.target_advisor_id ?? request.advisor_id);
       const stillApproved = getApprovedAdvisors(team).some((a) => a.id === rejectedId);
       if (!stillApproved) {
         syncPrimaryAdvisor(team);
