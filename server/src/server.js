@@ -81,12 +81,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(` 🚀 Info Lomba Ko+Lab Backend Server Active`);
   console.log(` 🌐 Server URL : http://localhost:${PORT}`);
   console.log(` 📡 API Prefix : http://localhost:${PORT}/api/v1`);
   console.log(`=======================================================`);
+});
+
+// Gagal membuka port harus menghentikan proses — kalau tidak, handler
+// uncaughtException di bawah menelannya dan server "hidup" tanpa melayani apa pun.
+httpServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} sudah dipakai proses lain. Tutup server lama (atau ganti PORT di .env), lalu jalankan ulang.`);
+  } else {
+    console.error('❌ Server gagal berjalan:', err);
+  }
+  process.exit(1);
 });
 
 // ── Penanganan crash: log error tak tertangani, server TIDAK mati senyap ──
