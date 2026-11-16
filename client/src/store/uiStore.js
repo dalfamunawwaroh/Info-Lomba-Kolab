@@ -9,7 +9,8 @@ if (initialTheme === 'dark') {
 }
 
 const useUIStore = create((set) => ({
-  sidebarOpen: true,
+  // Di layar kecil (HP) sidebar mulai tertutup agar tidak menutupi halaman
+  sidebarOpen: typeof window === 'undefined' ? true : window.innerWidth >= 1024,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
 

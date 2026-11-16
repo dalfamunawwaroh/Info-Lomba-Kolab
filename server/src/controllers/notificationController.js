@@ -97,7 +97,7 @@ export const getNotifications = (req, res) => {
           message: `Anda tergabung dalam tim "${t.name}" untuk lomba ${t.competition_title}`,
           date: t.created_at,
           read: true,
-          link: '/mahasiswa/history',
+          link: `/mahasiswa/my-teams?team=${t.id}`,
         });
 
         if (t.advisor_status === 'approved') {
@@ -108,7 +108,7 @@ export const getNotifications = (req, res) => {
             message: `${t.advisor_name} telah menyetujui bimbingan tim "${t.name}"`,
             date: t.created_at,
             read: true,
-            link: '/mahasiswa/history',
+            link: `/mahasiswa/my-teams?team=${t.id}`,
           });
         }
       });

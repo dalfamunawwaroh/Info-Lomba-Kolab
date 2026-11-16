@@ -2,7 +2,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   LayoutDashboard, Users, Building2, Trophy, UsersRound, Activity,
-  FileText, ClipboardList, History, ChevronLeft, ChevronRight, LogOut, X, Send, Megaphone
+  FileText, ClipboardList, History, ChevronLeft, ChevronRight, LogOut, X, Send, Megaphone, UserCircle2
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
 import { getInitials } from '@/utils/helpers';
@@ -34,11 +34,15 @@ const dosenMenu = [
 ];
 
 const mahasiswaMenu = [
+  { section: 'Utama' },
   { to: '/mahasiswa', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/mahasiswa/competitions', icon: Trophy, label: 'Daftar Lomba' },
+  { section: 'Lomba' },
+  { to: '/mahasiswa/competitions', icon: Trophy, label: 'Jelajah Lomba' },
   { to: '/mahasiswa/my-teams', icon: UsersRound, label: 'Tim Saya' },
-  { to: '/mahasiswa/history', icon: History, label: 'History' },
+  { to: '/mahasiswa/history', icon: History, label: 'Riwayat' },
+  { section: 'Komunitas' },
   { to: '/mahasiswa/directory', icon: Users, label: 'Direktori' },
+  { to: '/mahasiswa/profile', icon: UserCircle2, label: 'Profil Saya', end: true },
 ];
 
 function Sidebar() {
@@ -51,7 +55,7 @@ function Sidebar() {
     <>
       {sidebarOpen && <div className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      <aside className={`fixed left-0 top-0 z-50 h-screen bg-white dark:bg-[#0F1115] border-r border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col ${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full lg:w-[88px] lg:translate-x-0'}`}>
+      <aside className={`fixed left-0 top-0 z-50 h-screen bg-white dark:bg-[#0F1115] border-r border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col ${sidebarOpen ? 'w-[280px] translate-x-0' : 'w-0 -translate-x-full lg:w-[88px] lg:translate-x-0'}`}>
         
         {/* Logo Area */}
         <div className="h-24 flex items-center px-6 shrink-0 border-b border-slate-200 dark:border-white/5">
