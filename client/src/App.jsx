@@ -21,13 +21,18 @@ import PengajuanPage from '@/pages/admin/PengajuanPage';
 import BroadcastPage from '@/pages/admin/BroadcastPage';
 import DetailUserAdminPage from '@/pages/admin/DetailUserAdminPage';
 import StudentActivityPage from '@/pages/admin/StudentActivityPage';
+import AssignDosenPage from '@/pages/admin/AssignDosenPage';
+import SoloRegistrationsPage from '@/pages/admin/SoloRegistrationsPage';
 
 // Dosen Pages
 import DosenDashboardPage from '@/pages/dosen/DashboardPage';
+import DosenDaftarLombaPage from '@/pages/dosen/DaftarLombaPage';
+import DosenDetailLombaPage from '@/pages/dosen/DetailLombaPage';
 import TambahLombaPage from '@/pages/dosen/TambahLombaPage';
 import EditLombaPage from '@/pages/dosen/EditLombaPage';
 import PengajuanMasukPage from '@/pages/dosen/PengajuanMasukPage';
 import TimBimbinganPage from '@/pages/dosen/TimBimbinganPage';
+import DetailTimDosenPage from '@/pages/dosen/DetailTimDosenPage';
 import SelfAssignPage from '@/pages/dosen/SelfAssignPage';
 import TeamChangeRequestsPage from '@/pages/dosen/TeamChangeRequestsPage';
 
@@ -36,6 +41,7 @@ import MhsDashboardPage from '@/pages/mahasiswa/DashboardPage';
 import DaftarLombaPage from '@/pages/mahasiswa/DaftarLombaPage';
 import DetailLombaPage from '@/pages/mahasiswa/DetailLombaPage';
 import RegisterLombaPage from '@/pages/mahasiswa/RegisterLombaPage';
+import DetailTimMahasiswaPage from '@/pages/mahasiswa/DetailTimMahasiswaPage';
 import HistoryPage from '@/pages/mahasiswa/HistoryPage';
 
 // Shared Pages
@@ -124,6 +130,8 @@ function AppRoutes() {
         <Route path="competitions/:id/edit" element={<EditLombaPage />} />
         <Route path="teams" element={<ManageTimPage />} />
         <Route path="teams/:id" element={<DetailTimAdminPage />} />
+        <Route path="solo-registrations" element={<SoloRegistrationsPage />} />
+        <Route path="assign-dosen" element={<AssignDosenPage />} />
         <Route path="activities" element={<StudentActivityPage />} />
         <Route path="submissions" element={<PengajuanPage />} />
         <Route path="broadcast" element={<BroadcastPage />} />
@@ -144,12 +152,13 @@ function AppRoutes() {
         }
       >
         <Route index element={<DosenDashboardPage />} />
-        <Route path="competitions" element={<DaftarLombaPage />} />
+        <Route path="competitions" element={<DosenDaftarLombaPage />} />
         <Route path="competitions/add" element={<TambahLombaPage />} />
-        <Route path="competitions/:id" element={<DetailLombaPage />} />
+        <Route path="competitions/:id" element={<DosenDetailLombaPage />} />
         <Route path="competitions/:id/edit" element={<EditLombaPage />} />
         <Route path="advisor-requests" element={<PengajuanMasukPage />} />
         <Route path="my-teams" element={<TimBimbinganPage />} />
+        <Route path="my-teams/:id" element={<DetailTimDosenPage />} />
         <Route path="self-assign" element={<SelfAssignPage />} />
         <Route path="team-change-requests" element={<TeamChangeRequestsPage />} />
         <Route path="history" element={<HistoryPage />} />
@@ -173,6 +182,7 @@ function AppRoutes() {
         <Route path="competitions" element={<DaftarLombaPage />} />
         <Route path="competitions/:id" element={<DetailLombaPage />} />
         <Route path="competitions/:id/register" element={<RegisterLombaPage />} />
+        <Route path="teams/:id" element={<DetailTimMahasiswaPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="directory" element={<DirektoriPage />} />
         <Route path="profile" element={<ProfilePage />} />

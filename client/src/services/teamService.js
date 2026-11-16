@@ -1,6 +1,11 @@
 import api from './api';
 
 const teamService = {
+  async getTeams(params = {}) {
+    const res = await api.get('/teams', { params });
+    return res.data;
+  },
+
   async getTeamById(id) {
     const res = await api.get(`/teams/${id}`);
     return res.data;

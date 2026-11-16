@@ -52,8 +52,12 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
             </div>
           </div>
           <div className="space-y-4">
-            {myCompetitions?.length > 0 ? myCompetitions.map(item => (
-              <div key={item.competition?.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50 hover:border-[#9333EA]/30 hover:bg-purple-50/50 dark:hover:bg-slate-800/80 transition-colors gap-4">
+            {myCompetitions?.length > 0 ? myCompetitions.map((item, idx) => (
+              <Link
+                to={item.team ? `/mahasiswa/teams/${item.team.id}` : `/mahasiswa/competitions/${item.competition?.id}`}
+                key={item.team?.id ?? `${item.competition?.id}-${idx}`}
+                className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50 hover:border-[#9333EA]/30 hover:bg-purple-50/50 dark:hover:bg-slate-800/80 transition-colors gap-4"
+              >
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1 group-hover:text-[#9333EA] dark:group-hover:text-purple-400 transition-colors">{item.competition?.name}</h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -70,7 +74,7 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
                   </div>
                 </div>
                 <div className="shrink-0"><StatusBadge status={item.competition?.status} labels={STATUS_LABELS} /></div>
-              </div>
+              </Link>
             )) : (
               <div className="py-12 flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4"><Trophy size={32} /></div>
@@ -116,16 +120,20 @@ function MhsDashboard({ myCompetitions, upcomingCompetitions, advisorStatuses })
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight mb-8">Status Pengajuan Pembimbing</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {advisorStatuses.map(a => (
-              <div key={a.id} className="flex items-center justify-between p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50">
+              <Link
+                to={a.team?.id ? `/mahasiswa/teams/${a.team.id}` : '#'}
+                key={a.id}
+                className="flex items-center justify-between p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 bg-slate-50/80 dark:bg-slate-900/50 hover:border-[#9333EA]/30 transition-colors"
+              >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold">{getInitials(a.advisor?.name)}</div>
+                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold">{getInitials(a.advisor?.name || a.advisor_name)}</div>
                   <div>
-                    <p className="font-bold text-slate-900 dark:text-white">{a.advisor?.name}</p>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tim: {a.team?.name}</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{a.advisor?.name || a.advisor_name}</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tim: {a.team?.name || a.team_name}</p>
                   </div>
                 </div>
                 <StatusBadge status={a.status} labels={ADVISOR_STATUS_LABELS} />
-              </div>
+              </Link>
             ))}
           </div>
         </div>

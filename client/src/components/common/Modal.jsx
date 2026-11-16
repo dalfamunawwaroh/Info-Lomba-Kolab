@@ -1,7 +1,17 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/**
+ * Modal generik.
+ *
+ * Dirender lewat portal ke <body> supaya `fixed inset-0` benar-benar mengacu ke
+ * viewport. Tanpa portal, leluhur yang punya `transform`/`filter`/`backdrop-filter`
+ * (mis. <main className="animate-fade-in-up"> memakai animation-fill-mode: forwards,
+ * atau <header> dengan backdrop-blur) akan jadi containing block sehingga overlay
+ * mengikuti kotak leluhur — bukan layar — dan modal tampak mengambang/terpotong.
+ */
 function Modal({ isOpen, onClose, title, children, className }) {
   const overlayRef = useRef(null);
 
@@ -21,7 +31,7 @@ function Modal({ isOpen, onClose, title, children, className }) {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop bg-black/50 backdrop-blur-sm"
@@ -44,7 +54,8 @@ function Modal({ isOpen, onClose, title, children, className }) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

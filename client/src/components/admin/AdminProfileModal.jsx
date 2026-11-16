@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, User, Mail, Phone, Save, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import userService from '@/services/userService';
@@ -25,6 +26,14 @@ export function AdminProfileModal({ open, onClose }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // Kunci scroll body selama modal terbuka
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
 
   if (!open) return null;
 
@@ -60,7 +69,10 @@ export function AdminProfileModal({ open, onClose }) {
     }
   };
 
-  return (
+  // Portal ke <body>: Header memakai backdrop-blur + z-index yang menciptakan
+  // containing block & stacking context, sehingga `fixed inset-0` di sini akan
+  // mengacu ke kotak Header (bukan viewport) dan modal tampak mengambang.
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md rounded-[2rem] bg-white dark:bg-[#15181e] shadow-2xl p-8 animate-fade-in">
@@ -140,6 +152,7 @@ export function AdminProfileModal({ open, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

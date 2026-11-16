@@ -709,6 +709,58 @@
   ],
   "activities": [
     {
+      "id": "1794302874487-81166",
+      "entity_type": "submission",
+      "entity_id": 1794302865028,
+      "action": "rejected",
+      "title": "Pengajuan \"Pengajuan Pembimbingan Dosen\" ditolak",
+      "description": "Pemohon: Dr. Budi Santoso, M.T. • Tim: cihuy",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System Tes",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-11-10T09:27:54.487Z"
+    },
+    {
+      "id": "1794302874351-85823",
+      "entity_type": "submission",
+      "entity_id": 1794302865467,
+      "action": "rejected",
+      "title": "Pengajuan \"Pengajuan Pembimbingan Dosen\" ditolak",
+      "description": "Pemohon: Prof. Siti Aminah, Ph.D. • Tim: cihuy",
+      "actor_id": 1,
+      "actor_name": "Admin Ko+Lab System Tes",
+      "actor_role": "admin",
+      "metadata": null,
+      "created_at": "2026-11-10T09:27:54.351Z"
+    },
+    {
+      "id": "1794302865478-6945",
+      "entity_type": "submission",
+      "entity_id": 1794302865467,
+      "action": "create",
+      "title": "Pengajuan dosen pembimbing \"Prof. Siti Aminah, Ph.D.\" untuk tim \"cihuy\"",
+      "description": "",
+      "actor_id": 3,
+      "actor_name": "Prof. Siti Aminah, Ph.D.",
+      "actor_role": "dosen",
+      "metadata": null,
+      "created_at": "2026-11-10T09:27:45.478Z"
+    },
+    {
+      "id": "1794302865035-51027",
+      "entity_type": "submission",
+      "entity_id": 1794302865028,
+      "action": "create",
+      "title": "Pengajuan dosen pembimbing \"Dr. Budi Santoso, M.T.\" untuk tim \"cihuy\"",
+      "description": "",
+      "actor_id": 2,
+      "actor_name": "Dr. Budi Santoso, M.T.",
+      "actor_role": "dosen",
+      "metadata": null,
+      "created_at": "2026-11-10T09:27:45.035Z"
+    },
+    {
       "id": "1793345533117-81907",
       "entity_type": "user",
       "entity_id": 1793345533086,

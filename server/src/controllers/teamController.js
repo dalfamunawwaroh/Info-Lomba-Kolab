@@ -20,12 +20,30 @@ export const getTeamById = (req, res) => {
       return res.status(404).json({ success: false, message: 'Tim tidak ditemukan' });
     }
 
+    const isAdmin = req.user.role === 'admin';
+    const isMember = (team.members || []).some((m) => m.user_id === req.user.id);
+    const isAdvisor = team.advisor_id === req.user.id || (team.advisors || []).some((a) => a.id === req.user.id && a.status === 'approved');
+    if (!isAdmin && !isMember && !isAdvisor) {
+      return res.status(403).json({ success: false, message: 'Anda tidak memiliki akses ke tim ini' });
+    }
+
     const comp = data.competitions.find((c) => c.id === team.competition_id) || null;
+    const advisors = [];
+    if (team.advisor_id && team.advisor_status === 'approved') {
+      advisors.push({ id: team.advisor_id, name: team.advisor_name });
+    }
+    for (const a of team.advisors || []) {
+      if (a.status === 'approved' && !advisors.find((x) => x.id === a.id)) {
+        advisors.push({ id: a.id, name: a.name });
+      }
+    }
+
     return res.json({
       success: true,
       data: {
         ...team,
         competition: comp ? { ...comp, name: comp.title } : null,
+        advisors,
       },
     });
   } catch (error) {

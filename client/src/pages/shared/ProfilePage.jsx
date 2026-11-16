@@ -11,7 +11,7 @@ import {
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ROLE_LABELS, STATUS_LABELS } from '@/utils/constants';
-import { formatDate, getInitials } from '@/utils/helpers';
+import { formatDate, getInitials, skillsToText } from '@/utils/helpers';
 import useUIStore from '@/store/uiStore';
 
 export default function ProfilePage() {
@@ -97,7 +97,7 @@ export default function ProfilePage() {
           identityNumber: activeUser?.nim_nip || (activeUser?.role === 'mahasiswa' ? '2208101010023' : '198503152010121003'),
           department: activeUser?.department || 'Informatika & Ilmu Komputer',
           bio: activeUser?.bio || 'Mahasiswa berprestasi yang menyukai pengembangan aplikasi web & kecerdasan buatan.',
-          skills: activeUser?.skills || 'React.js, Tailwind CSS, UI/UX Design, Node.js',
+          skills: skillsToText(activeUser?.skills) || 'React.js, Tailwind CSS, UI/UX Design, Node.js',
           linkedin: activeUser?.linkedin || 'https://linkedin.com/in/user-kolab',
           github: activeUser?.github || 'https://github.com/user-kolab',
         });
@@ -398,7 +398,7 @@ export default function ProfilePage() {
                 <div>
                   <span className="text-slate-400 block mb-1">Keahlian Utama:</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {formData.skills.split(',').map((sk, idx) => (
+                    {skillsToText(formData.skills).split(',').filter(Boolean).map((sk, idx) => (
                       <span key={idx} className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20 font-medium">
                         {sk.trim()}
                       </span>

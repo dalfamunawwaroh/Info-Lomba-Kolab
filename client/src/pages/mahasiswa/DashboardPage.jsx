@@ -3,6 +3,7 @@ import { MhsDashboard } from '@/components/dashboard/MhsDashboard';
 import { SkeletonCard } from '@/components/common/SkeletonLoader';
 import competitionService from '@/services/competitionService';
 import historyService from '@/services/historyService';
+import advisorService from '@/services/advisorService';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function MhsDashboardPage() {
@@ -15,9 +16,10 @@ export default function MhsDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [compRes, historyRes] = await Promise.allSettled([
+        const [compRes, historyRes, reqRes] = await Promise.allSettled([
           competitionService.getCompetitions({ status: 'upcoming', limit: 5 }),
           historyService.getUserHistory(user.id),
+          advisorService.getTeamAdvisorRequests(),
         ]);
 
         if (historyRes.status === 'fulfilled') {
@@ -29,6 +31,7 @@ export default function MhsDashboardPage() {
           setMyCompetitions(all);
         }
         setUpcomingCompetitions(compRes.status === 'fulfilled' ? compRes.value.data || [] : []);
+        setAdvisorStatuses(reqRes.status === 'fulfilled' ? reqRes.value.data || [] : []);
       } catch (err) {
         console.error(err);
       } finally {
