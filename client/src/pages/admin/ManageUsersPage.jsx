@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit, Eye, UserCheck, UserX, Search, Trophy, GraduationCap, ShieldCheck, BookOpen, IdCard, Hash, KeyRound, Send, Mail, MapPin, CalendarDays, AtSign, Link as LinkIcon, Image as ImageIcon, PenLine } from 'lucide-react';
 import userService from '@/services/userService';
@@ -265,13 +266,27 @@ export default function ManageUsersPage() {
                         onClick={() => navigate(`/admin/users/${u.id}`)}
                         title="Lihat Detail"
                         onMouseMove={(e) => {
-                          const TOOLTIP_W = 256, TOOLTIP_H = 220, GAP = 16;
+                          const TOOLTIP_W = 256, TOOLTIP_H = 220, GAP = 14, EDGE = 12;
                           setHoverUser(u);
+
+                          // Horizontal: geser ke kanan kursor, balik ke kiri bila mepet tepi.
                           let x = e.clientX + GAP;
-                          if (x + TOOLTIP_W > window.innerWidth - 8) x = e.clientX - TOOLTIP_W - GAP;
-                          let below = true, y = e.clientY + GAP;
-                          if (y + TOOLTIP_H > window.innerHeight - 8) { y = e.clientY - TOOLTIP_H - GAP; below = false; }
-                          setHoverPos({ x: Math.max(8, x), y: Math.max(8, y), below });
+                          if (x + TOOLTIP_W > window.innerWidth - EDGE) {
+                            x = e.clientX - TOOLTIP_W - GAP;
+                          }
+                          x = Math.min(Math.max(EDGE, x), window.innerWidth - TOOLTIP_W - EDGE);
+
+                          // Vertikal: usahakan sejajar dengan baris yang di-hover
+                          // (tidak menggantung di bawah kursor). Bila tidak muat,
+                          // dorong ke atas sampai seluruh kartu terlihat.
+                          const rowTop = e.currentTarget.getBoundingClientRect().top;
+                          let y = rowTop;
+                          if (y + TOOLTIP_H > window.innerHeight - EDGE) {
+                            y = window.innerHeight - TOOLTIP_H - EDGE;
+                          }
+                          y = Math.max(EDGE, y);
+
+                          setHoverPos({ x, y, below: true });
                         }}
                         onMouseLeave={() => setHoverUser(null)}
                       >
@@ -776,13 +791,14 @@ export default function ManageUsersPage() {
         </div>
       )}
 
-      {/* Hover ringkas — ikut cursor, flip atas/bawah bila mepet tepi */}
-      {hoverUser && (
+      {/* Hover ringkas — portal ke body agar `position: fixed` mengacu ke
+          viewport, bukan ke <main> yang punya transform dari animate-fade-in-up. */}
+      {hoverUser && createPortal(
         <div
           className="fixed z-[100] w-64 pointer-events-none animate-fade-in"
           style={{ left: hoverPos.x, top: hoverPos.y }}
         >
-          <div className={`absolute left-6 w-3 h-3 rotate-45 bg-white dark:bg-[#15181e] border-slate-200 dark:border-white/10 ${hoverPos.below === false ? '-bottom-1.5 border-b border-r' : '-top-1.5 border-t border-l'}`} />
+          <div className="absolute left-6 -top-1.5 w-3 h-3 rotate-45 bg-white dark:bg-[#15181e] border-t border-l border-slate-200 dark:border-white/10" />
           <div className="rounded-2xl bg-white dark:bg-[#15181e] shadow-2xl border border-slate-200 dark:border-white/10 p-4 text-left">
             <p className="text-xs font-extrabold text-slate-900 dark:text-white truncate">{hoverUser.name}</p>
             <p className="text-[11px] text-slate-400 truncate mt-0.5">{hoverUser.email}</p>
@@ -799,7 +815,8 @@ export default function ManageUsersPage() {
             )}
             <p className="mt-2 text-[11px] font-bold text-[#9333EA]">Klik untuk detail →</p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

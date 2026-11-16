@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import useUIStore from '@/store/uiStore';
 import activityService from '@/services/activityService';
+import { Modal } from '@/components/common/Modal';
 
 // ============ Config ============
 const ACTIVITY_META = {
@@ -298,11 +299,13 @@ function WorkspaceModal({ team, onClose }) {
   const simSafe = doc.similarity_status === 'safe';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-md" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-[#13151C] w-full max-w-3xl rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)] max-h-[92vh] overflow-hidden flex flex-col animate-fade-in"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="Ruang Kerja Tim"
+      className="max-w-3xl !p-0 overflow-hidden max-h-[85vh] flex flex-col"
+    >
+      <div className="flex-1 overflow-y-auto custom-scrollbar -m-6">
         {/* ── Hero Header ── */}
         <div className="relative overflow-hidden shrink-0">
           {/* Gradient background */}
@@ -581,7 +584,7 @@ function WorkspaceModal({ team, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
