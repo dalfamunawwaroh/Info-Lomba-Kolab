@@ -4,7 +4,15 @@ import { syncTeam, syncSubmission, logActivity } from '../db/sync.js';
 export const getAdvisorRequests = (req, res) => {
   try {
     const data = db.read();
-    const requests = data.submissions.filter((s) => s.type === 'advisor_self_assign' || s.type === 'advisor_assign');
+    const { status } = req.query;
+    let requests = data.submissions.filter(
+      (s) => s.type === 'advisor_self_assign' || s.type === 'advisor_assign' || s.type === 'advisor_request'
+    );
+    // Dosen hanya melihat pengajuan tim (advisor_request) yang ditujukan kepadanya
+    if (req.user?.role === 'dosen') {
+      requests = requests.filter((s) => s.type !== 'advisor_request' || s.target_advisor_id === req.user.id);
+    }
+    if (status) requests = requests.filter((s) => s.status === status);
     // Embed tim + lomba agar halaman dosen/admin bisa menampilkan nama & lomba tim
     const payload = requests.map((s) => {
       const team = data.teams.find((t) => t.id === s.team_id) || null;
@@ -36,6 +44,9 @@ export const respondToRequest = (req, res) => {
     if (request.status !== 'pending') {
       return res.status(400).json({ success: false, message: `Pengajuan sudah diproses (${request.status})` });
     }
+    if (request.type === 'advisor_request' && req.user.role === 'dosen' && request.target_advisor_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Pengajuan ini tidak ditujukan kepada Anda' });
+    }
 
     request.status = status;
     request.processed_at = new Date().toISOString();
@@ -51,6 +62,13 @@ export const respondToRequest = (req, res) => {
       team.advisor_status = 'approved';
       syncTeam(team);
       message = `${request.applicant_name} resmi menjadi dosen pembimbing "${team.name}"`;
+    } else if (team && status === 'approved' && request.type === 'advisor_request') {
+      // Dosen yang dituju menyetujui pengajuan dari ketua tim
+      team.advisor_id = request.target_advisor_id;
+      team.advisor_name = request.target_advisor_name;
+      team.advisor_status = 'approved';
+      syncTeam(team);
+      message = `${request.target_advisor_name} resmi menjadi dosen pembimbing "${team.name}"`;
     } else if (team && status === 'rejected' && team.advisor_status === 'pending') {
       team.advisor_status = 'rejected';
       syncTeam(team);

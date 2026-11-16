@@ -37,12 +37,13 @@ export const respondToSubmission = (req, res) => {
 
     // If it's advisor self assign, update team advisor status too
     let updatedTeam = null;
-    if (sub.type === 'advisor_self_assign' && sub.team_id) {
+    if ((sub.type === 'advisor_self_assign' || sub.type === 'advisor_request') && sub.team_id) {
       updatedTeam = data.teams.find((t) => t.id === sub.team_id);
       if (updatedTeam) {
         if (sub.status === 'approved') {
-          updatedTeam.advisor_id = sub.applicant_id;
-          updatedTeam.advisor_name = sub.applicant_name;
+          const isTeamRequest = sub.type === 'advisor_request';
+          updatedTeam.advisor_id = isTeamRequest ? sub.target_advisor_id : sub.applicant_id;
+          updatedTeam.advisor_name = isTeamRequest ? sub.target_advisor_name : sub.applicant_name;
           updatedTeam.advisor_status = 'approved';
         } else if (sub.status === 'rejected') {
           updatedTeam.advisor_status = 'rejected';

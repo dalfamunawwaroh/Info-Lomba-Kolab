@@ -215,6 +215,20 @@
       "status": "active",
       "avatar": null,
       "created_at": "2026-10-30T07:32:13.087Z"
+    },
+    {
+      "id": 1794795797634,
+      "name": "Alya",
+      "email": "fajrialyaya78@gmail.com",
+      "password": "$2a$10$kcWYNMaUJoDWHc6yvYCQie0q3KFC2gF..QsaoCTgzgIBK1DexXZ6u",
+      "role": "mahasiswa",
+      "nip_nim": "607012430005",
+      "phone": "",
+      "startup_id": 1792467752715,
+      "startup_name": "Kroombox",
+      "status": "active",
+      "avatar": null,
+      "created_at": "2026-11-16T02:23:17.634Z"
     }
   ],
   "startups": [
@@ -708,6 +722,19 @@
     }
   ],
   "activities": [
+    {
+      "id": "1794795797642-80358",
+      "entity_type": "user",
+      "entity_id": 1794795797634,
+      "action": "register",
+      "title": "Registrasi user \"Alya\"",
+      "description": "Role: mahasiswa • Email: fajrialyaya78@gmail.com",
+      "actor_id": 1794795797634,
+      "actor_name": "Alya",
+      "actor_role": "mahasiswa",
+      "metadata": null,
+      "created_at": "2026-11-16T02:23:17.642Z"
+    },
     {
       "id": "1793345533117-81907",
       "entity_type": "user",
