@@ -10,7 +10,12 @@ import { getInitials } from '@/utils/helpers';
 
 function DosenDashboard({ stats, pendingRequests = [], myTeams = [], upcomingCompetitions = [] }) {
   const { user } = useAuth();
-  const firstName = user?.name?.split(' ')[0] || 'Dosen';
+  // Nama dosen biasanya berawalan gelar ("Dr.", "Prof.", "Ir.") dan berakhiran
+  // gelar ("M.T.", "Ph.D."). Ambil kata pertama yang bukan gelar agar sapaan
+  // tidak menjadi "Bpk/Ibu Dr.".
+  const GELAR = /^(dr|prof|ir|drs|dra|hj|h)\.?$/i;
+  const nameParts = String(user?.name || '').split(/[\s,]+/).filter(Boolean);
+  const firstName = nameParts.find((w) => !GELAR.test(w)) || 'Dosen';
 
   const pendingCount = stats?.pending_requests ?? pendingRequests.length;
   const activeTeams = stats?.active_teams ?? myTeams.length;
